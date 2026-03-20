@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [lang, setLang] = useState<'id' | 'en'>('id');
   const [accessCode, setAccessCode] = useState('');
   const router = useRouter();
@@ -24,74 +25,77 @@ export default function Dashboard() {
     window.location.href = '/';
   };
 
+  const handleJoinCode = () => {
+    const code = accessCode.toUpperCase();
+    if (!code) return alert(lang === 'id' ? "Masukkan kode dulu!" : "Enter code first!");
+
+    if (code.startsWith('GAME')) router.push(`/games?code=${code}`);
+    else if (code.startsWith('QUIZ')) router.push(`/quiz?code=${code}`);
+    else if (code.startsWith('TEST')) router.push(`/test/run?code=${code}`);
+    else {
+      alert(lang === 'id' 
+        ? "Kode tidak dikenali. Gunakan awalan GAME-, QUIZ-, atau TEST-" 
+        : "Invalid code. Use prefix GAME-, QUIZ-, or TEST-");
+    }
+  };
+
+  // --- UPDATE BAGIAN NAVIGASI MENU ---
   const handleMenuClick = (name: string) => {
-    // Navigasi berdasarkan nama menu (Mendukung ID & EN)
+    const n = name.toLowerCase();
+    if (n === 'materi' || n === 'materials') router.push('/materi');
+    else if (n === 'permainan' || n === 'games') router.push('/games');
+    else if (n === 'lab virtual' || n === 'virtual lab') router.push('/virtual-lab');
     
-    // 1. Materi
-    if (name === 'Materi' || name === 'Materials') {
-      router.push('/materi');
-    } 
-    // 2. Permainan / Games
-    else if (name === 'Permainan' || name === 'Games') {
-      router.push('/games');
-    } 
-    // 3. Ujian / Test (Logika Guru vs Siswa)
-    else if (name === 'Ujian' || name === 'Test') {
-      if (user?.role === 'teacher') {
-        router.push('/test'); 
-      } else {
-        router.push('/test/run'); 
-      }
-    }
-    // 4. Laporan / Reports
-    else if (name === 'Laporan' || name === 'Reports') {
-      router.push('/reports');
-    }
-    // 5. Perpustakaan / Library (Koleksi Soal & Aktivitas)
-    else if (name === 'Perpustakaan' || name === 'Library') {
-      router.push('/test'); 
-    }
-    // 6. Lab Virtual
-    else if (name === 'Lab Virtual' || name === 'Virtual Lab') {
-      router.push('/virtual-lab');
-    }
-    // 7. Beranda
-    else if (name === 'Beranda' || name === 'Home') {
-      setIsSidebarOpen(false);
-    }
+    // Navigasi ke halaman AR yang baru
+    else if (n === 'augmented reality' || n === 'ar') router.push('/ar'); 
+    
+    else if (n === 'ujian' || n === 'test') router.push(user?.role === 'teacher' ? '/test' : '/test/run');
+    else if (n === 'kuis' || n === 'quiz') router.push('/quiz');
+    else if (n === 'perpustakaan' || n === 'library') router.push('/library');
+    else if (n === 'laporan' || n === 'reports') router.push('/reports');
+    else if (n === 'profil' || n === 'profile') router.push('/profile');
+    else if (n === 'pengaturan' || n === 'settings') router.push('/settings');
   };
 
   const t = {
     id: {
-      slogan: "Jelajahi keajaiban kehidupan dan temukan rahasia biologi di ujung jari Anda.",
-      menuTitle: "Menu Utama",
+      slogan: "Discover the Fascinating World of Biology",
+      menuTitle: "BIOscope Menu",
       logout: "Keluar",
-      placeholder: "Masukkan kode akses (Contoh: BIO-123)",
-      joinBtn: "Gabung Kelas",
+      placeholder: "Contoh: GAME-123, QUIZ-BIO",
+      joinBtn: "Join",
+      profileMenus: ["Ganti Foto", "Ubah Username"],
       items: [
-        { name: 'Beranda', icon: '🏠' },
         { name: 'Materi', icon: '📚' },
         { name: 'Permainan', icon: '🎮' },
         { name: 'Lab Virtual', icon: '🧪' },
+        { name: 'Augmented Reality', icon: '🕶️' }, // Menu AR
         { name: 'Ujian', icon: '📝' },
+        { name: 'Kuis', icon: '🏆' },
         { name: 'Perpustakaan', icon: '📖' },
         { name: 'Laporan', icon: '📊' },
+        { name: 'Profil', icon: '👤' },
+        { name: 'Pengaturan', icon: '⚙️' },
       ]
     },
     en: {
-      slogan: "Explore the wonders of life and discover biology's secrets at your fingertips.",
-      menuTitle: "Main Menu",
-      logout: "Logout",
-      placeholder: "Enter access code (e.g., BIO-123)",
-      joinBtn: "Join Class",
+      slogan: "Discover the Fascinating World of Biology",
+      menuTitle: "BIOscope Menu",
+      logout: "Quit",
+      placeholder: "e.g., GAME-123, QUIZ-BIO",
+      joinBtn: "Join",
+      profileMenus: ["Change Photo", "Change Username"],
       items: [
-        { name: 'Home', icon: '🏠' },
         { name: 'Materials', icon: '📚' },
         { name: 'Games', icon: '🎮' },
         { name: 'Virtual Lab', icon: '🧪' },
+        { name: 'AR', icon: '🕶️' }, // Menu AR
         { name: 'Test', icon: '📝' },
+        { name: 'Quiz', icon: '🏆' },
         { name: 'Library', icon: '📖' },
         { name: 'Reports', icon: '📊' },
+        { name: 'Profile', icon: '👤' },
+        { name: 'Settings', icon: '⚙️' },
       ]
     }
   }[lang];
@@ -99,89 +103,97 @@ export default function Dashboard() {
   if (!user) return <div className="p-10 text-black text-center font-bold">Loading...</div>;
 
   return (
-    <main className="min-h-screen bg-slate-50 text-black font-sans flex">
+    <main className="min-h-screen bg-slate-50 text-black font-sans flex overflow-hidden">
       
-      {/* --- SIDEBAR --- */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-2xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 border-r border-slate-100`}>
-        <div className="p-6 border-b flex justify-between items-center">
-          <span className="font-bold text-xl text-green-600 tracking-tight">{t.menuTitle}</span>
-          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-2xl">&times;</button>
+      {/* SIDEBAR */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out border-r`}>
+        <div className="p-6 border-b flex justify-between items-center bg-green-600 text-white">
+          <span className="font-bold text-xl tracking-tight">BIOscope</span>
+          <button onClick={() => setIsSidebarOpen(false)} className="text-2xl">&times;</button>
         </div>
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-150px)]">
           {t.items.map((item) => (
             <button 
               key={item.name} 
               onClick={() => handleMenuClick(item.name)}
-              className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-green-50 hover:text-green-600 transition-all font-medium text-slate-600"
+              className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-green-50 hover:text-green-600 transition-all font-medium text-slate-600 text-sm text-left"
             >
               <span className="text-xl">{item.icon}</span> {item.name}
             </button>
           ))}
-          <button 
-            onClick={handleLogout}
-            className="w-full flex items-center gap-4 p-3 rounded-xl bg-red-50 text-red-500 transition-all font-bold mt-10 hover:bg-red-100"
-          >
-            <span>🚪</span> {t.logout}
+          <button onClick={handleLogout} className="w-full p-3 rounded-xl text-red-500 font-bold mt-4 hover:bg-red-50 text-left">
+            {t.logout}
           </button>
         </nav>
       </div>
 
-      {/* --- KONTEN UTAMA --- */}
-      <div className="flex-1 flex flex-col relative overflow-y-auto h-screen">
+      {/* KONTEN UTAMA */}
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto relative">
         
-        {/* Top Bar: Toggle & Language */}
-        <div className="p-4 flex justify-between items-center absolute w-full top-0 left-0 z-10">
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="lg:hidden text-3xl bg-white p-2 rounded-xl shadow-sm">☰</button>
+        {/* TOP BAR */}
+        <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b p-3 flex justify-between items-center px-6">
+          <button onClick={() => setIsSidebarOpen(true)} className="text-2xl p-2 hover:bg-slate-100 rounded-lg">☰</button>
           
-          <div className="ml-auto flex gap-2">
-            <button onClick={() => setLang('id')} className={`px-4 py-1 rounded-lg font-bold transition shadow-sm ${lang === 'id' ? 'bg-green-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>ID</button>
-            <button onClick={() => setLang('en')} className={`px-4 py-1 rounded-lg font-bold transition shadow-sm ${lang === 'en' ? 'bg-green-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>EN</button>
+          <div className="flex items-center gap-4">
+            <div className="flex bg-slate-100 p-1 rounded-full border text-[10px] font-bold">
+              <button onClick={() => setLang('id')} className={`px-3 py-1 rounded-full transition ${lang === 'id' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-400'}`}>INDONESIA</button>
+              <button onClick={() => setLang('en')} className={`px-3 py-1 rounded-full transition ${lang === 'en' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-400'}`}>ENGLISH</button>
+            </div>
+            
+            <div className="relative">
+              <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-2 hover:bg-slate-50 p-1 pr-3 rounded-full border transition">
+                <img src={user?.photo || `https://ui-avatars.com/api/?name=${user?.name}`} alt="Avatar" className="w-8 h-8 rounded-full shadow-sm" />
+                <span className="text-xs font-bold hidden sm:block">{user?.name} ▾</span>
+              </button>
+              {isProfileOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border p-2 z-50">
+                  {t.profileMenus.map(m => (
+                    <button key={m} className="w-full text-left p-3 text-xs font-medium hover:bg-slate-50 rounded-xl transition">{m}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button onClick={handleLogout} className="text-sm font-bold text-red-500 hover:text-red-700 px-2 transition">{t.logout}</button>
           </div>
         </div>
 
-        {/* 1. HEADER TENGAH */}
-        <header className="flex flex-col items-center justify-center pt-20 pb-8 px-4 text-center">
-          <Image src="/logo.png" alt="Logo" width={100} height={100} className="mb-6 drop-shadow-md" />
-          <h1 className="text-5xl font-black italic mb-2 tracking-tighter">
-            <span className="text-green-600">BIO</span><span className="text-sky-400">scope</span>
-          </h1>
-          <p className="text-slate-500 text-lg font-medium italic max-w-xl">
-            "{t.slogan}"
-          </p>
+        <header className="flex flex-col items-center justify-center pt-12 pb-10 px-4 text-center">
+          <Image src="/logo.png" alt="Logo" width={180} height={180} className="mb-4 mix-blend-multiply" priority />
+          <p className="text-slate-500 text-lg md:text-xl font-medium italic">"{t.slogan}"</p>
         </header>
 
-        {/* 2. KOLOM ENTER CODE */}
-        <section className="flex flex-col items-center px-4 mb-12">
-          <div className="w-full max-w-lg bg-white p-2 rounded-[2rem] shadow-xl shadow-green-100/50 flex flex-col md:flex-row gap-2 border border-green-100">
-            <input 
+        <section className="px-6 mb-10 flex justify-center">
+          <div className="w-full max-w-md bg-white p-2 rounded-2xl shadow-lg flex gap-2 border border-slate-100">
+             <input 
               type="text" 
               placeholder={t.placeholder}
               value={accessCode}
               onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-              className="flex-1 p-4 rounded-[1.5rem] bg-slate-50 outline-none text-center font-bold text-lg focus:bg-white transition-all uppercase placeholder:normal-case placeholder:font-normal"
+              className="flex-1 p-3 bg-slate-50 rounded-xl outline-none text-center font-bold placeholder:font-normal placeholder:text-sm text-black"
             />
-            <button className="bg-green-600 text-white px-8 py-4 rounded-[1.5rem] font-bold hover:bg-green-700 transition-all active:scale-95 shadow-md">
-              {t.joinBtn}
-            </button>
+            <button onClick={handleJoinCode} className="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 transition shadow-md active:scale-95">{t.joinBtn}</button>
           </div>
         </section>
 
-        {/* 3. GRID MENU (Body Dashboard) */}
-        <div className="p-8 max-w-6xl mx-auto w-full pb-20">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
+        <div className="px-6 max-w-6xl mx-auto w-full pb-20">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
             {t.items.map((item) => (
               <div 
                 key={item.name} 
                 onClick={() => handleMenuClick(item.name)}
-                className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer group"
+                className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer group text-center"
               >
                 <div className="text-4xl group-hover:scale-110 transition-transform">{item.icon}</div>
-                <span className="font-bold text-slate-700 text-center">{item.name}</span>
+                <span className="font-bold text-slate-700 text-sm md:text-base">{item.name}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {(isProfileOpen || isSidebarOpen) && (
+        <div onClick={() => {setIsProfileOpen(false); setIsSidebarOpen(false)}} className="fixed inset-0 z-30 bg-black/10" />
+      )}
     </main>
   );
 }
