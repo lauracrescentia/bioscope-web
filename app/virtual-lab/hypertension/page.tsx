@@ -1,211 +1,146 @@
 "use client";
-import { useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-// Tipe Data untuk Soal
-type QuestionType = 'quiz' | 'multiple-choice' | 'true-false';
-
-interface Question {
-  id: string;
-  type: QuestionType;
-  questionText: string;
-  media: string | null;
-  options: { id: string; text: string; isCorrect: boolean }[];
-  timeLimit: number;
-}
-
-export default function CreateQuizScratch() {
+export default function HypertensionVirtualLab() {
   const router = useRouter();
-  const [gameName, setGameName] = useState('');
-  const [questions, setQuestions] = useState<Question[]>([createNewQuestion('quiz')]);
-  const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // States untuk simulasi
+  const [pressure, setPressure] = useState(120); // Sistolik
+  const [heartRate, setHeartRate] = useState(70); // Detak jantung
+  const [dataLog, setDataLog] = useState<{time: number, bp: number, hr: number}[]>([]);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [time, setTime] = useState(0);
 
-  // Fungsi membuat soal baru
-  function createNewQuestion(type: QuestionType): Question {
-    const defaultOptions = type === 'true-false' 
-      ? [{ id: '1', text: 'True', isCorrect: true }, { id: '2', text: 'False', isCorrect: false }]
-      : [
-          { id: '1', text: '', isCorrect: true },
-          { id: '2', text: '', isCorrect: false },
-          { id: '3', text: '', isCorrect: false },
-          { id: '4', text: '', isCorrect: false },
-        ];
-    
-    return {
-      id: Date.now().toString(),
-      type,
-      questionText: '',
-      media: null,
-      options: defaultOptions,
-      timeLimit: 30,
-    };
-  }
+  // Animasi Jantung (Kecepatan detak berdasarkan pressure)
+  const heartSpeed = Math.max(0.3, 1.5 - (pressure / 200)); 
 
-  const addQuestion = (type: QuestionType) => {
-    const newQ = createNewQuestion(type);
-    setQuestions([...questions, newQ]);
-    setActiveQuestionIndex(questions.length);
-  };
-
-  const updateQuestion = (data: Partial<Question>) => {
-    const updated = [...questions];
-    updated[activeQuestionIndex] = { ...updated[activeQuestionIndex], ...data };
-    setQuestions(updated);
-    // Auto-save logic bisa diletakkan di sini (misal ke LocalStorage)
-  };
-
-  const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      updateQuestion({ media: url });
+  useEffect(() => {
+    let interval: any;
+    if (isSimulating && time < 20) {
+      interval = setInterval(() => {
+        setTime((prev) => prev + 1);
+        
+        // Logika: Semakin tinggi tekanan, jantung dipaksa detak lebih cepat (heart rate naik)
+        const newBP = pressure + Math.floor(Math.random() * 5);
+        const newHR = heartRate + Math.floor((newBP - 120) / 10);
+        
+        setDataLog((prev) => [...prev, { time: time, bp: newBP, hr: newHR }]);
+      }, 1000);
+    } else if (time >= 20) {
+      setIsSimulating(false);
     }
-  };
-
-  const handlePublish = () => {
-    const quizCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    alert(`Quiz Published! Code: ${quizCode}`);
-    router.push('/quiz/library');
-  };
-
-  const currentQ = questions[activeQuestionIndex];
+    return () => clearInterval(interval);
+  }, [isSimulating, time, pressure, heartRate]);
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
-      {/* Top Bar */}
-      <nav className="bg-white border-b p-4 flex justify-between items-center sticky top-0 z-50">
-        <div className="flex items-center gap-4">
-          <button onClick={() => router.back()} className="text-slate-500 font-bold">← Back</button>
-          <input 
-            type="text" 
-            placeholder="Enter Bioscope Game Name..." 
-            className="text-xl font-black uppercase tracking-tighter border-b-2 border-black outline-none focus:border-indigo-500 transition-all w-64"
-            value={gameName}
-            onChange={(e) => setGameName(e.target.value)}
-          />
-        </div>
-        <div className="flex gap-3">
-          <button className="px-6 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-all">Save to Draft</button>
-          <button onClick={handlePublish} className="px-6 py-2 bg-indigo-600 text-white font-black rounded-xl shadow-[4px_4px_0_0_#312e81] hover:translate-y-1 hover:shadow-none transition-all">Publish</button>
-        </div>
-      </nav>
-
-      <div className="max-w-6xl mx-auto grid grid-cols-12 gap-6 p-6">
-        {/* Left Sidebar: Question List */}
-        <div className="col-span-3 space-y-4">
-          <h3 className="font-black uppercase text-xs text-slate-400 tracking-widest">Questions</h3>
-          <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2">
-            {questions.map((q, idx) => (
-              <div 
-                key={q.id}
-                onClick={() => setActiveQuestionIndex(idx)}
-                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${activeQuestionIndex === idx ? 'border-indigo-600 bg-white shadow-md' : 'border-transparent bg-slate-200 opacity-60'}`}
-              >
-                <span className="text-xs font-black italic"># {idx + 1} - {q.type.toUpperCase()}</span>
-                <p className="text-sm font-bold truncate">{q.questionText || 'Empty Question...'}</p>
-              </div>
-            ))}
+    <main className="min-h-screen bg-[#F0F4F8] p-4 md:p-8 font-sans text-[#0F172A]">
+      <div className="max-w-6xl mx-auto space-y-6">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center bg-white border-4 border-black p-6 rounded-3xl shadow-[8px_8px_0_0_#000]">
+          <div>
+            <h1 className="text-3xl font-black italic uppercase">Virtual Lab: Hipertensi</h1>
+            <p className="text-sm font-bold text-slate-500">Simulasi Beban Jantung & Tekanan Darah</p>
           </div>
+          <button onClick={() => router.back()} className="font-black underline uppercase">Keluar</button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* Add Question Buttons (Point 5) */}
-          <div className="pt-4 border-t space-y-2">
-            <button onClick={() => addQuestion('quiz')} className="w-full py-3 bg-white border-2 border-dashed border-slate-300 rounded-xl font-bold text-sm hover:border-indigo-500 hover:text-indigo-600 transition-all">+ Quiz (Single)</button>
-            <button onClick={() => addQuestion('multiple-choice')} className="w-full py-3 bg-white border-2 border-dashed border-slate-300 rounded-xl font-bold text-sm hover:border-indigo-500 hover:text-indigo-600 transition-all">+ Multiple Choice</button>
-            <button onClick={() => addQuestion('true-false')} className="w-full py-3 bg-white border-2 border-dashed border-slate-300 rounded-xl font-bold text-sm hover:border-indigo-500 hover:text-indigo-600 transition-all">+ True or False</button>
-          </div>
-        </div>
-
-        {/* Main Canvas (Point 2, 3, 4) */}
-        <div className="col-span-9 space-y-6">
-          <div className="bg-white border-4 border-black rounded-[2.5rem] p-8 shadow-[8px_8px_0_0_#000]">
-            {/* Toolbar Simbol (Point 2) */}
-            <div className="flex gap-2 mb-4 border-b pb-4">
-              <button className="p-2 hover:bg-slate-100 rounded font-serif font-bold">B</button>
-              <button className="p-2 hover:bg-slate-100 rounded italic">I</button>
-              <button className="p-2 hover:bg-slate-100 rounded font-mono">Σ Equation</button>
-              <div className="flex-1"></div>
-              <select 
-                className="bg-slate-100 font-bold px-3 py-1 rounded-lg text-sm"
-                value={currentQ.timeLimit}
-                onChange={(e) => updateQuestion({ timeLimit: Number(e.target.value) })}
-              >
-                <option value={10}>10 Sec</option>
-                <option value={30}>30 Sec</option>
-                <option value={60}>1 Min</option>
-              </select>
-            </div>
-
-            {/* Question Input */}
-            <textarea 
-              placeholder="Type your question here (No word limit)..."
-              className="w-full text-2xl font-bold outline-none min-h-[100px] resize-none"
-              value={currentQ.questionText}
-              onChange={(e) => updateQuestion({ questionText: e.target.value })}
-            />
-
-            {/* Media Upload Section (Point 3) */}
-            <div className="mt-6 border-2 border-dashed border-slate-200 rounded-3xl p-6 flex flex-col items-center justify-center bg-slate-50">
-              {currentQ.media ? (
-                <div className="relative group">
-                  <img src={currentQ.media} alt="Media" className="max-h-64 rounded-xl shadow-lg" />
-                  <button 
-                    onClick={() => updateQuestion({ media: null })}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all"
-                  >✕</button>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <p className="font-bold text-slate-400 mb-2">Find and insert media</p>
-                  <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-2 bg-black text-white rounded-xl font-black text-xs uppercase"
-                  >Upload Image/Video</button>
-                  <input type="file" ref={fileInputRef} hidden onChange={handleMediaUpload} />
-                </div>
+          {/* KIRI: Visualisasi Jantung (Point A) */}
+          <div className="lg:col-span-5 bg-white border-4 border-black rounded-[2.5rem] p-8 shadow-[8px_8px_0_0_#EF4444] flex flex-col items-center justify-center relative overflow-hidden">
+            <h2 className="absolute top-6 left-8 font-black uppercase text-slate-400">Visualisasi Beban Kerja Jantung</h2>
+            
+            {/* Animasi Jantung */}
+            <div 
+              className="w-48 h-48 bg-red-500 rounded-full flex items-center justify-center shadow-inner mb-6 relative"
+              style={{ animation: `pulse ${heartSpeed}s infinite ease-in-out` }}
+            >
+              <span className="text-7xl">❤️</span>
+              {pressure > 140 && (
+                <div className="absolute inset-0 border-8 border-red-300 rounded-full animate-ping opacity-50"></div>
               )}
             </div>
 
-            {/* Options Section (Point 4, 6, 7, 8) */}
-            <div className="grid grid-cols-2 gap-4 mt-8">
-              {currentQ.options.map((opt, oIdx) => (
-                <div 
-                  key={opt.id}
-                  className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all ${opt.isCorrect ? 'border-green-500 bg-green-50 shadow-[4px_4px_0_0_#22c55e]' : 'border-slate-200 bg-white hover:border-slate-400'}`}
-                >
-                  <button 
-                    onClick={() => {
-                      const newOpts = [...currentQ.options];
-                      if (currentQ.type === 'quiz' || currentQ.type === 'true-false') {
-                        newOpts.forEach(o => o.isCorrect = false);
-                        newOpts[oIdx].isCorrect = true;
-                      } else {
-                        newOpts[oIdx].isCorrect = !newOpts[oIdx].isCorrect;
-                      }
-                      updateQuestion({ options: newOpts });
-                    }}
-                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${opt.isCorrect ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300'}`}
-                  >
-                    {opt.isCorrect && '✓'}
-                  </button>
-                  <input 
-                    type="text" 
-                    placeholder={`Option ${oIdx + 1}`}
-                    disabled={currentQ.type === 'true-false'}
-                    className="flex-1 bg-transparent outline-none font-bold"
-                    value={opt.text}
-                    onChange={(e) => {
-                      const newOpts = [...currentQ.options];
-                      newOpts[oIdx].text = e.target.value;
-                      updateQuestion({ options: newOpts });
-                    }}
-                  />
-                </div>
-              ))}
+            <div className="text-center space-y-2">
+              <p className="text-4xl font-black tracking-tighter">{pressure} <span className="text-lg uppercase text-slate-400">mmHg</span></p>
+              <p className={`font-bold px-4 py-1 rounded-full border-2 border-black inline-block
+                ${pressure > 140 ? 'bg-red-500 text-white' : 'bg-green-400 text-black'}`}>
+                {pressure > 140 ? 'Beban Kerja: Tinggi' : 'Beban Kerja: Normal'}
+              </p>
+            </div>
+
+            {/* Kontrol Tekanan */}
+            <div className="w-full mt-10 space-y-4">
+              <label className="block text-center font-black uppercase text-xs">Atur Tekanan Darah</label>
+              <input 
+                type="range" min="100" max="200" step="5"
+                className="w-full h-4 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-black border-2 border-black"
+                value={pressure}
+                onChange={(e) => {
+                   setPressure(Number(e.target.value));
+                   setTime(0);
+                   setDataLog([]);
+                }}
+              />
+              <button 
+                onClick={() => { setIsSimulating(true); setTime(0); setDataLog([]); }}
+                disabled={isSimulating}
+                className="w-full py-4 bg-black text-white rounded-2xl font-black uppercase italic shadow-[4px_4px_0_0_#EF4444] active:translate-y-1 transition-all"
+              >
+                {isSimulating ? 'Mensimulasi...' : 'Mulai Simulasi ⚡'}
+              </button>
             </div>
           </div>
+
+          {/* KANAN: Grafik Interaktif (Point B) */}
+          <div className="lg:col-span-7 bg-white border-4 border-black rounded-[2.5rem] p-8 shadow-[8px_8px_0_0_#6366F1]">
+            <h2 className="font-black uppercase mb-6 border-b-4 border-black pb-2">Grafik Tekanan Darah Real-time</h2>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={dataLog}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="time" hide />
+                  <YAxis domain={[80, 220]} />
+                  <Tooltip contentStyle={{borderRadius: '16px', border: '4px solid black'}} />
+                  <Line type="monotone" dataKey="bp" stroke="#EF4444" strokeWidth={4} dot={false} />
+                  <Line type="monotone" dataKey="hr" stroke="#6366F1" strokeWidth={4} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex gap-6 mt-4 justify-center">
+              <div className="flex items-center gap-2"><div className="w-4 h-4 bg-red-500 rounded"></div> <span className="text-xs font-bold uppercase">Tekanan Darah</span></div>
+              <div className="flex items-center gap-2"><div className="w-4 h-4 bg-indigo-500 rounded"></div> <span className="text-xs font-bold uppercase">Detak Jantung</span></div>
+            </div>
+          </div>
+
         </div>
+
+        {/* Feedback Ilmiah (Point C) */}
+        {time >= 20 && (
+          <div className="bg-yellow-300 border-4 border-black p-8 rounded-[2.5rem] shadow-[8px_8px_0_0_#000] animate-bounce-short">
+            <h3 className="text-2xl font-black uppercase italic mb-4">Kesimpulan Ilmiah 🧪</h3>
+            <p className="font-bold leading-relaxed text-lg">
+              Berdasarkan simulasi, saat tekanan darah naik ke <span className="bg-white px-2">{pressure} mmHg</span>, 
+              otot jantung (miokardium) harus berkontraksi lebih kuat dan cepat untuk melawan resistensi pembuluh darah. 
+              Jika kondisi ini berlangsung lama, jantung dapat mengalami hipertrofi (penebalan otot) yang justru melemahkan fungsinya, menyebabkan gagal jantung.
+            </p>
+          </div>
+        )}
       </div>
-    </div>
+
+      <style jsx>{`
+        @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.15); }
+          100% { transform: scale(1); }
+        }
+        .animate-bounce-short {
+          animation: bounce 0.5s ease-in-out 1;
+        }
+      `}</style>
+    </main>
   );
 }
