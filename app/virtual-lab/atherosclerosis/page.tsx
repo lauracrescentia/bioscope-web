@@ -1,198 +1,221 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+// --- IMPORT IKON ---
+import { 
+  BookOpen, 
+  Gamepad2, 
+  FlaskConical, 
+  Box, 
+  FileText, 
+  Trophy, 
+  Library, 
+  BarChart3, 
+  User, 
+  Settings,
+  LogOut,
+  Languages,
+  Menu,
+  X,
+  Grid // Ikon Grid untuk Menu Utama
+} from "lucide-react";
 
-export default function HeartRateLab() {
+export default function Dashboard() {
+  const [user, setUser] = useState<any>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [lang, setLang] = useState<'id' | 'en'>('id');
+  const [accessCode, setAccessCode] = useState('');
   const router = useRouter();
-  
-  const [bpm, setBpm] = useState(70);
-  const [isRunning, setIsRunning] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
-  
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
-  const xPosRef = useRef(0);
 
-  // --- LOGIKA PERUBAHAN BPM ---
-  // Dibuat lebih responsif agar perubahan angka terasa natural
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRunning) {
-      interval = setInterval(() => {
-        setBpm(prev => Math.min(prev + 4, 160));
-      }, 1500);
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     } else {
-      interval = setInterval(() => {
-        setBpm(prev => Math.max(prev - 2, 70));
-      }, 1000);
+      window.location.href = '/';
     }
-    return () => clearInterval(interval);
-  }, [isRunning]);
+  }, []);
 
-  // --- LOGIKA GRAFIK EKG ---
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    window.location.href = '/';
+  };
 
-    const draw = () => {
-      // Efek trail yang halus
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const handleJoinCode = () => {
+    const code = accessCode.toUpperCase();
+    if (!code) return alert(lang === 'id' ? "Masukkan kode dulu!" : "Enter code first!");
 
-      ctx.beginPath();
-      // Warna garis mengikuti status tombol
-      ctx.strokeStyle = isRunning ? '#22c55e' : '#3b82f6'; 
-      ctx.lineWidth = 2;
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = isRunning ? '#22c55e' : '#3b82f6';
+    if (code.startsWith('GAME')) router.push(`/games?code=${code}`);
+    else if (code.startsWith('QUIZ')) router.push(`/quiz?code=${code}`);
+    else if (code.startsWith('TEST')) router.push(`/test/run?code=${code}`);
+    else {
+      alert(lang === 'id' 
+        ? "Kode tidak dikenali. Gunakan awalan GAME-, QUIZ-, atau TEST-" 
+        : "Invalid code. Use prefix GAME-, QUIZ-, or TEST-");
+    }
+  };
 
-      const middle = canvas.height / 2;
-      const x = xPosRef.current % canvas.width;
-      
-      // Kecepatan gelombang berdasarkan BPM
-      const cycle = 6000 / bpm; 
-      const step = xPosRef.current % cycle;
-      let y = middle;
+  const handleMenuClick = (name: string) => {
+    const n = name.toLowerCase();
+    if (n === 'materi' || n === 'materials') router.push('/materi');
+    else if (n === 'permainan' || n === 'games') router.push('/games');
+    else if (n === 'lab virtual' || n === 'virtual lab') router.push('/virtual-lab');
+    else if (n === 'augmented reality' || n === 'ar') router.push('/ar'); 
+    else if (n === 'ujian' || n === 'test') router.push(user?.role === 'teacher' ? '/test' : '/test/run');
+    else if (n === 'kuis' || n === 'quiz') router.push('/quiz');
+    else if (n === 'perpustakaan' || n === 'library') router.push('/library');
+    else if (n === 'laporan' || n === 'reports') router.push('/reports');
+    else if (n === 'profil' || n === 'profile') router.push('/profile');
+    else if (n === 'pengaturan' || n === 'settings') router.push('/settings');
+  };
 
-      // Gelombang PQRST
-      if (step > 10 && step < 20) y -= 8; 
-      else if (step >= 20 && step < 25) y += 5; 
-      else if (step >= 25 && step < 35) y -= 45; // Puncak R
-      else if (step >= 35 && step < 40) y += 15; 
-      else if (step >= 50 && step < 75) y -= 10; // Gelombang T
+  const t = {
+    id: {
+      slogan: "Discover the Fascinating World of Biology",
+      menuTitle: "BIOscope Menu",
+      logout: "Keluar",
+      placeholder: "Contoh: GAME-123, QUIZ-BIO",
+      joinBtn: "Join",
+      profileMenus: ["Ganti Foto", "Ubah Username"],
+      items: [
+        { name: 'Materi', icon: <BookOpen size={24} /> },
+        { name: 'Permainan', icon: <Gamepad2 size={24} /> },
+        { name: 'Lab Virtual', icon: <FlaskConical size={24} /> },
+        { name: 'Augmented Reality', icon: <Box size={24} /> },
+        { name: 'Ujian', icon: <FileText size={24} /> },
+        { name: 'Kuis', icon: <Trophy size={24} /> },
+        { name: 'Perpustakaan', icon: <Library size={24} /> },
+        { name: 'Laporan', icon: <BarChart3 size={24} /> },
+        { name: 'Profil', icon: <User size={24} /> },
+        { name: 'Pengaturan', icon: <Settings size={24} /> },
+      ]
+    },
+    en: {
+      slogan: "Discover the Fascinating World of Biology",
+      menuTitle: "BIOscope Menu",
+      logout: "Quit",
+      placeholder: "e.g., GAME-123, QUIZ-BIO",
+      joinBtn: "Join",
+      profileMenus: ["Change Photo", "Change Username"],
+      items: [
+        { name: 'Materials', icon: <BookOpen size={24} /> },
+        { name: 'Games', icon: <Gamepad2 size={24} /> },
+        { name: 'Virtual Lab', icon: <FlaskConical size={24} /> },
+        { name: 'AR', icon: <Box size={24} /> },
+        { name: 'Test', icon: <FileText size={24} /> },
+        { name: 'Quiz', icon: <Trophy size={24} /> },
+        { name: 'Library', icon: <Library size={24} /> },
+        { name: 'Reports', icon: <BarChart3 size={24} /> },
+        { name: 'Profile', icon: <User size={24} /> },
+        { name: 'Settings', icon: <Settings size={24} /> },
+      ]
+    }
+  }[lang];
 
-      ctx.moveTo(x, middle);
-      ctx.lineTo(x + 2, y);
-      ctx.stroke();
-
-      // Reset garis saat mencapai ujung kanan
-      if (x > canvas.width - 2) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-
-      xPosRef.current += 2;
-      animationRef.current = requestAnimationFrame(draw);
-    };
-
-    draw();
-    return () => cancelAnimationFrame(animationRef.current!);
-  }, [bpm, isRunning]);
+  if (!user) return <div className="p-10 text-black text-center font-bold">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-4 md:p-8 font-sans">
-      <div className="max-w-4xl mx-auto">
-        
-        {/* Header */}
-        <header className="flex justify-between items-center mb-8 border-b border-slate-800 pb-6">
-          <button onClick={() => router.back()} className="font-black text-slate-500 hover:text-white transition-all tracking-tighter uppercase italic">
-            ← Exit Lab
+    <main className="min-h-screen bg-slate-50 text-black font-sans flex overflow-hidden">
+      
+      {/* SIDEBAR */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out border-r`}>
+        <div className="p-6 border-b flex justify-between items-center bg-green-600 text-white">
+          <div className="flex items-center gap-2">
+             <Grid size={20} />
+             <span className="font-bold text-xl tracking-tight">BIOscope</span>
+          </div>
+          <button onClick={() => setIsSidebarOpen(false)} className="hover:bg-green-700 p-1 rounded-lg transition">
+            <X size={24} />
           </button>
-          <h1 className="text-xl md:text-3xl font-black italic uppercase text-white tracking-tighter">
-            Activity <span className={isRunning ? 'text-green-500' : 'text-blue-500'}>&</span> Heart Rate
-          </h1>
-          <div className={`text-xs font-mono animate-pulse uppercase tracking-widest ${isRunning ? 'text-green-500' : 'text-blue-500'}`}>
-            ● Monitoring System
-          </div>
-        </header>
+        </div>
+        <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-150px)]">
+          {t.items.map((item) => (
+            <button 
+              key={item.name} 
+              onClick={() => handleMenuClick(item.name)}
+              className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-green-50 hover:text-green-600 transition-all font-medium text-slate-600 text-sm text-left group"
+            >
+              <span className="text-slate-400 group-hover:text-green-600 transition-colors">{item.icon}</span> {item.name}
+            </button>
+          ))}
+          <button onClick={handleLogout} className="w-full flex items-center gap-4 p-3 rounded-xl text-red-500 font-bold mt-4 hover:bg-red-50 text-left">
+            <LogOut size={20} /> {t.logout}
+          </button>
+        </nav>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* KONTEN UTAMA */}
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto relative">
+        
+        {/* TOP BAR */}
+        <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b p-3 flex justify-between items-center px-6">
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-slate-100 rounded-lg transition">
+            <Menu size={24} />
+          </button>
           
-          {/* Sisi Kiri: Animasi Karakter & Tombol */}
-          <div className="bg-slate-900 rounded-[3rem] border-4 border-slate-800 p-10 flex flex-col items-center shadow-2xl relative overflow-hidden">
-            <div className="relative mb-10">
-               <div className={`absolute -bottom-2 left-1/2 -translate-x-1/2 w-12 h-3 bg-black/40 rounded-full blur-md transition-all ${isRunning ? 'animate-pulse scale-150' : ''}`}></div>
-               <div className="text-9xl relative z-10 animate-bounce" style={{ animationDuration: isRunning ? '0.4s' : '1.5s' }}>
-                 {isRunning ? '🏃‍♂️' : '🚶‍♂️'}
-               </div>
+          <div className="flex items-center gap-4">
+            <div className="flex bg-slate-100 p-1 rounded-full border text-[10px] font-bold">
+              <button onClick={() => setLang('id')} className={`px-3 py-1 rounded-full transition ${lang === 'id' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-400'}`}>INDONESIA</button>
+              <button onClick={() => setLang('en')} className={`px-3 py-1 rounded-full transition ${lang === 'en' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-400'}`}>ENGLISH</button>
             </div>
             
-            <div className="w-full space-y-4">
-              <button 
-                onClick={() => {setIsRunning(true); setShowFeedback(true);}}
-                className={`w-full py-6 rounded-3xl font-black text-xl border-b-[10px] active:border-b-0 active:translate-y-2 transition-all ${isRunning ? 'bg-slate-800 border-slate-950 text-slate-600 cursor-not-allowed shadow-none' : 'bg-green-500 border-green-800 text-white hover:bg-green-400 shadow-[0_0_25px_rgba(34,197,94,0.3)]'}`}
-                disabled={isRunning}
-              >
-                START RUNNING 🔥
+            <div className="relative">
+              <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-2 hover:bg-slate-50 p-1 pr-3 rounded-full border transition">
+                <img src={user?.photo || `https://ui-avatars.com/api/?name=${user?.name}`} alt="Avatar" className="w-8 h-8 rounded-full shadow-sm" />
+                <span className="text-xs font-bold hidden sm:block">{user?.name} ▾</span>
               </button>
-              
-              <button 
-                onClick={() => setIsRunning(false)}
-                className={`w-full py-6 rounded-3xl font-black text-xl border-b-[10px] active:border-b-0 active:translate-y-2 transition-all ${!isRunning ? 'bg-slate-800 border-slate-950 text-slate-600 cursor-not-allowed shadow-none' : 'bg-blue-600 border-blue-900 text-white hover:bg-blue-500 shadow-[0_0_25px_rgba(59,130,246,0.3)]'}`}
-                disabled={!isRunning}
-              >
-                STOP & REST 🧊
-              </button>
-            </div>
-          </div>
-
-          {/* Sisi Kanan: Monitor ECG */}
-          <div className={`bg-slate-900 rounded-[3rem] border-4 border-slate-800 p-8 shadow-2xl flex flex-col transition-all duration-500 ${isRunning ? 'border-t-green-500 shadow-green-900/10' : 'border-t-blue-500 shadow-blue-900/10'}`}>
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] italic">Physiological Data</h3>
-                <div className={`px-3 py-1 border rounded-full text-[10px] font-bold uppercase transition-all ${isRunning ? 'bg-green-500/10 border-green-500 text-green-500' : 'bg-blue-500/10 border-blue-500 text-blue-500'}`}>
-                  {isRunning ? 'Active Mode' : 'Recovery Mode'}
+              {isProfileOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border p-2 z-50">
+                  {t.profileMenus.map(m => (
+                    <button key={m} className="w-full text-left p-3 text-xs font-medium hover:bg-slate-50 rounded-xl transition">{m}</button>
+                  ))}
                 </div>
-            </div>
-            
-            <div className="flex-1 bg-black rounded-[2rem] border-4 border-slate-800 p-4 mb-6 flex flex-col items-center justify-center relative overflow-hidden shadow-[inset_0_0_30px_rgba(0,0,0,1)]">
-              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-              <canvas ref={canvasRef} width={400} height={120} className="w-full relative z-10" />
-              <div className="mt-6 flex items-baseline gap-2 relative z-10">
-                <span className={`text-7xl font-black italic tracking-tighter transition-colors ${isRunning ? 'text-green-400' : 'text-blue-400'}`}>
-                  {bpm}
-                </span>
-                <span className="font-black text-slate-600 italic uppercase">BPM</span>
-              </div>
-              <div className={`absolute top-6 right-8 text-3xl ${isRunning ? 'animate-ping' : 'animate-pulse'}`} style={{ animationDuration: `${60/bpm}s` }}>
-                {isRunning ? '⚡' : '💤'}
-              </div>
-            </div>
-
-            <div className="bg-black/50 p-5 rounded-2xl border-2 border-slate-800">
-               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Analisis Aktivitas:</h4>
-               {isRunning ? (
-                 <p className="text-xs font-bold text-green-400 leading-tight">
-                   Kenaikan BPM: Otot sedang bekerja keras dan memerlukan Oksigen (O<sub>2</sub>) lebih banyak. Jantung memompa lebih cepat untuk memenuhi kebutuhan tersebut.
-                 </p>
-               ) : (
-                 <p className="text-xs font-bold text-blue-400 leading-tight">
-                   Penurunan BPM: Tubuh sedang dalam fase pemulihan (Resting). Kebutuhan energi menurun, sehingga jantung melambat untuk menghemat energi.
-                 </p>
-               )}
+              )}
             </div>
           </div>
         </div>
 
-        {/* Info Panel Detail (Feedback) */}
-        {showFeedback && (
-          <div className="mt-10 bg-slate-900 border-4 border-slate-800 p-8 rounded-[3rem] shadow-2xl animate-in fade-in slide-in-from-bottom-5 transition-all">
-            <div className="flex items-center gap-4 mb-6">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-lg transition-colors ${isRunning ? 'bg-green-600 shadow-green-600/20' : 'bg-blue-600 shadow-blue-600/20'}`}>🔬</div>
-                <h3 className="text-2xl font-black italic uppercase tracking-tighter">Kesimpulan Ilmiah</h3>
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4 text-slate-400 font-medium text-sm leading-relaxed">
-                <p>
-                  <strong>1. Saat Berlari:</strong> Sistem saraf simpatis aktif. Jantung meningkatkan frekuensi detaknya agar O<sub>2</sub> terdistribusi cepat ke seluruh sel otot untuk respirasi sel.
-                </p>
-                <p>
-                  <strong>2. Saat Berhenti:</strong> Sistem saraf parasimpatis mengambil alih untuk menjaga Homeostasis (keseimbangan tubuh) dengan menurunkan frekuensi detak jantung.
-                </p>
-              </div>
-              <div className="bg-black/40 p-5 rounded-3xl border border-slate-800">
-                <p className="text-xs text-slate-500 font-bold uppercase mb-2">Monitor Indikator:</p>
-                <ul className="text-xs text-slate-300 space-y-2 italic font-bold uppercase">
-                  <li>• BPM Naik = Suplai O<sub>2</sub> Meningkat</li>
-                  <li>• BPM Turun = Fase Pemulihan</li>
-                  <li>• Homeostasis = Kondisi Normal 70-80 BPM</li>
-                </ul>
-              </div>
-            </div>
+        <header className="flex flex-col items-center justify-center pt-12 pb-10 px-4 text-center">
+          <Image src="/logo.png" alt="Logo" width={180} height={180} className="mb-4 mix-blend-multiply" priority />
+          <p className="text-slate-500 text-lg md:text-xl font-medium italic">"{t.slogan}"</p>
+        </header>
+
+        <section className="px-6 mb-10 flex justify-center">
+          <div className="w-full max-w-md bg-white p-2 rounded-2xl shadow-lg flex gap-2 border border-slate-100">
+             <input 
+              type="text" 
+              placeholder={t.placeholder}
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+              className="flex-1 p-3 bg-slate-50 rounded-xl outline-none text-center font-bold placeholder:font-normal placeholder:text-sm text-black"
+            />
+            <button onClick={handleJoinCode} className="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 transition shadow-md active:scale-95">JOIN</button>
           </div>
-        )}
+        </section>
+
+        <div className="px-6 max-w-6xl mx-auto w-full pb-20">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
+            {t.items.map((item) => (
+              <div 
+                key={item.name} 
+                onClick={() => handleMenuClick(item.name)}
+                className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer group text-center"
+              >
+                <div className="text-green-600 group-hover:scale-110 transition-transform duration-300">
+                  {item.icon}
+                </div>
+                <span className="font-bold text-slate-700 text-sm md:text-base">{item.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
+
+      {(isProfileOpen || isSidebarOpen) && (
+        <div onClick={() => {setIsProfileOpen(false); setIsSidebarOpen(false)}} className="fixed inset-0 z-30 bg-black/10" />
+      )}
+    </main>
   );
 }
