@@ -10,7 +10,8 @@ export default function HeartRateLab() {
   const [showFeedback, setShowFeedback] = useState(false);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
+  // --- PERBAIKAN 1: Tambahkan nilai awal (0) agar tidak error di TypeScript ---
+  const animationRef = useRef<number>(0);
   const xPosRef = useRef(0);
 
   // --- LOGIKA PERUBAHAN BPM ---
@@ -70,7 +71,10 @@ export default function HeartRateLab() {
     };
 
     draw();
-    return () => cancelAnimationFrame(animationRef.current!);
+    // --- PERBAIKAN 2: Gunakan pengecekan aman agar tidak error saat unmount ---
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
   }, [bpm, isRunning]);
 
   return (
@@ -141,16 +145,16 @@ export default function HeartRateLab() {
             </div>
 
             <div className="bg-black/50 p-5 rounded-2xl border-2 border-slate-800">
-               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Analisis Aktivitas:</h4>
-               {isRunning ? (
-                 <p className="text-xs font-bold text-green-400 leading-tight">
-                   Kenaikan BPM: Otot sedang bekerja keras dan memerlukan Oksigen (O<sub>2</sub>) lebih banyak. Jantung memompa lebih cepat untuk memenuhi kebutuhan tersebut.
-                 </p>
-               ) : (
-                 <p className="text-xs font-bold text-blue-400 leading-tight">
-                   Penurunan BPM: Tubuh sedang dalam fase pemulihan (Resting). Kebutuhan energi menurun, sehingga jantung melambat untuk menghemat energi.
-                 </p>
-               )}
+                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Analisis Aktivitas:</h4>
+                {isRunning ? (
+                  <p className="text-xs font-bold text-green-400 leading-tight">
+                    Kenaikan BPM: Otot sedang bekerja keras dan memerlukan Oksigen (O<sub>2</sub>) lebih banyak. Jantung memompa lebih cepat untuk memenuhi kebutuhan tersebut.
+                  </p>
+                ) : (
+                  <p className="text-xs font-bold text-blue-400 leading-tight">
+                    Penurunan BPM: Tubuh sedang dalam fase pemulihan (Resting). Kebutuhan energi menurun, sehingga jantung melambat untuk menghemat energi.
+                  </p>
+                )}
             </div>
           </div>
         </div>
