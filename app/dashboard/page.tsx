@@ -7,12 +7,11 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [lang, setLang] = useState<'id' | 'en'>('id'); // Default awal
+  const [lang, setLang] = useState<'id' | 'en'>('id'); 
   const [accessCode, setAccessCode] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    // 1. Ambil data User
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -20,14 +19,12 @@ export default function Dashboard() {
       window.location.href = '/';
     }
 
-    // 2. Ambil bahasa yang tersimpan agar PERMANEN
     const savedLang = localStorage.getItem('app_lang') as 'id' | 'en';
     if (savedLang) {
       setLang(savedLang);
     }
   }, []);
 
-  // Fungsi simpan bahasa ke localStorage
   const changeLanguage = (newLang: 'id' | 'en') => {
     setLang(newLang);
     localStorage.setItem('app_lang', newLang);
@@ -39,7 +36,7 @@ export default function Dashboard() {
   };
 
   const handleJoinCode = () => {
-    const code = accessCode.toUpperCase();
+    const code = accessCode.toUpperCase().trim();
     if (!code) return alert(lang === 'id' ? "Masukkan kode dulu!" : "Enter code first!");
 
     if (code.startsWith('GAME')) router.push(`/games?code=${code}`);
@@ -53,7 +50,9 @@ export default function Dashboard() {
   };
 
   const handleMenuClick = (name: string) => {
-    const n = name.toLowerCase();
+    // Normalisasi input: huruf kecil dan hapus spasi berlebih
+    const n = name.toLowerCase().trim();
+    
     if (n === 'materi' || n === 'materials') router.push('/materi');
     else if (n === 'permainan' || n === 'games') router.push('/games');
     else if (n === 'lab virtual' || n === 'virtual lab') router.push('/virtual-lab');
@@ -62,6 +61,8 @@ export default function Dashboard() {
     else if (n === 'kuis' || n === 'quiz') router.push('/quiz');
     else if (n === 'perpustakaan' || n === 'library') router.push('/library');
     else if (n === 'laporan' || n === 'reports') router.push('/reports');
+    // PERBAIKAN DI SINI: Pastikan route sesuai dengan folder /app/journal
+    else if (n === 'jurnal belajar' || n === 'learning journal') router.push('/journal'); 
     else if (n === 'profil' || n === 'profile') router.push('/profile');
     else if (n === 'pengaturan' || n === 'settings') router.push('/settings');
   };
@@ -81,8 +82,9 @@ export default function Dashboard() {
         { name: 'Augmented Reality', icon: '🕶️' },
         { name: 'Ujian', icon: '📝' },
         { name: 'Kuis', icon: '🏆' },
-        { name: 'Perpustakaan', icon: '📖' },
+        { name: 'Jurnal Belajar', icon: '✍️' }, 
         { name: 'Laporan', icon: '📊' },
+        { name: 'Perpustakaan', icon: '📖' },
         { name: 'Profil', icon: '👤' },
         { name: 'Pengaturan', icon: '⚙️' },
       ]
@@ -101,8 +103,9 @@ export default function Dashboard() {
         { name: 'AR', icon: '🕶️' },
         { name: 'Test', icon: '📝' },
         { name: 'Quiz', icon: '🏆' },
-        { name: 'Library', icon: '📖' },
+        { name: 'Learning Journal', icon: '✍️' }, 
         { name: 'Reports', icon: '📊' },
+        { name: 'Library', icon: '📖' },
         { name: 'Profile', icon: '👤' },
         { name: 'Settings', icon: '⚙️' },
       ]
@@ -119,7 +122,7 @@ export default function Dashboard() {
         <div className="p-6 border-b flex justify-between items-center bg-green-600 text-white">
           <div className="flex items-center gap-3">
              <img src={user?.photo || `https://ui-avatars.com/api/?name=${user?.name}&background=random`} className="w-10 h-10 rounded-full border-2 border-white shadow-md" alt="User" />
-             <div className="flex flex-col">
+             <div className="flex flex-col text-left">
                 <span className="font-bold text-sm tracking-tight leading-none">{user?.name}</span>
                 <span className="text-[10px] opacity-80 uppercase">{user?.role || 'Student'}</span>
              </div>
@@ -136,7 +139,7 @@ export default function Dashboard() {
               <span className="text-xl">{item.icon}</span> {item.name}
             </button>
           ))}
-          <button onClick={handleLogout} className="w-full p-3 rounded-xl text-red-500 font-bold mt-4 hover:bg-red-50 text-left">
+          <button onClick={handleLogout} className="w-full p-3 rounded-xl text-red-500 font-bold mt-4 hover:bg-red-50 text-left border-t pt-5">
             {t.logout}
           </button>
         </nav>
@@ -149,13 +152,11 @@ export default function Dashboard() {
           <button onClick={() => setIsSidebarOpen(true)} className="text-2xl p-2 hover:bg-slate-100 rounded-lg">☰</button>
           
           <div className="flex items-center gap-4">
-            {/* Language Switcher with Persistence */}
             <div className="flex bg-slate-100 p-1 rounded-full border text-[10px] font-bold">
               <button onClick={() => changeLanguage('id')} className={`px-3 py-1 rounded-full transition ${lang === 'id' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-400'}`}>ID</button>
               <button onClick={() => changeLanguage('en')} className={`px-3 py-1 rounded-full transition ${lang === 'en' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-400'}`}>EN</button>
             </div>
             
-            {/* User Profile Info */}
             <div className="relative">
               <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-2 hover:bg-slate-50 p-1 pr-3 rounded-full border transition-all active:scale-95">
                 <img src={user?.photo || `https://ui-avatars.com/api/?name=${user?.name}&background=random`} alt="Avatar" className="w-8 h-8 rounded-full shadow-sm object-cover" />
@@ -166,9 +167,6 @@ export default function Dashboard() {
               </button>
               {isProfileOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border p-2 z-50 animate-in fade-in zoom-in duration-200">
-                  <div className="p-3 mb-2 border-b text-center sm:hidden">
-                     <p className="font-bold text-xs">{user?.name}</p>
-                  </div>
                   {t.profileMenus.map(m => (
                     <button key={m} className="w-full text-left p-3 text-xs font-medium hover:bg-slate-50 rounded-xl transition">{m}</button>
                   ))}
