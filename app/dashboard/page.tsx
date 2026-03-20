@@ -7,18 +7,31 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [lang, setLang] = useState<'id' | 'en'>('id');
+  const [lang, setLang] = useState<'id' | 'en'>('id'); // Default awal
   const [accessCode, setAccessCode] = useState('');
   const router = useRouter();
 
   useEffect(() => {
+    // 1. Ambil data User
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     } else {
       window.location.href = '/';
     }
+
+    // 2. Ambil bahasa yang tersimpan agar PERMANEN
+    const savedLang = localStorage.getItem('app_lang') as 'id' | 'en';
+    if (savedLang) {
+      setLang(savedLang);
+    }
   }, []);
+
+  // Fungsi simpan bahasa ke localStorage
+  const changeLanguage = (newLang: 'id' | 'en') => {
+    setLang(newLang);
+    localStorage.setItem('app_lang', newLang);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -39,16 +52,12 @@ export default function Dashboard() {
     }
   };
 
-  // --- UPDATE BAGIAN NAVIGASI MENU ---
   const handleMenuClick = (name: string) => {
     const n = name.toLowerCase();
     if (n === 'materi' || n === 'materials') router.push('/materi');
     else if (n === 'permainan' || n === 'games') router.push('/games');
     else if (n === 'lab virtual' || n === 'virtual lab') router.push('/virtual-lab');
-    
-    // Navigasi ke halaman AR yang baru
     else if (n === 'augmented reality' || n === 'ar') router.push('/ar'); 
-    
     else if (n === 'ujian' || n === 'test') router.push(user?.role === 'teacher' ? '/test' : '/test/run');
     else if (n === 'kuis' || n === 'quiz') router.push('/quiz');
     else if (n === 'perpustakaan' || n === 'library') router.push('/library');
@@ -59,8 +68,8 @@ export default function Dashboard() {
 
   const t = {
     id: {
+      welcome: "Selamat Datang,",
       slogan: "Discover the Fascinating World of Biology",
-      menuTitle: "BIOscope Menu",
       logout: "Keluar",
       placeholder: "Contoh: GAME-123, QUIZ-BIO",
       joinBtn: "Join",
@@ -69,7 +78,7 @@ export default function Dashboard() {
         { name: 'Materi', icon: '📚' },
         { name: 'Permainan', icon: '🎮' },
         { name: 'Lab Virtual', icon: '🧪' },
-        { name: 'Augmented Reality', icon: '🕶️' }, // Menu AR
+        { name: 'Augmented Reality', icon: '🕶️' },
         { name: 'Ujian', icon: '📝' },
         { name: 'Kuis', icon: '🏆' },
         { name: 'Perpustakaan', icon: '📖' },
@@ -79,8 +88,8 @@ export default function Dashboard() {
       ]
     },
     en: {
+      welcome: "Welcome back,",
       slogan: "Discover the Fascinating World of Biology",
-      menuTitle: "BIOscope Menu",
       logout: "Quit",
       placeholder: "e.g., GAME-123, QUIZ-BIO",
       joinBtn: "Join",
@@ -89,7 +98,7 @@ export default function Dashboard() {
         { name: 'Materials', icon: '📚' },
         { name: 'Games', icon: '🎮' },
         { name: 'Virtual Lab', icon: '🧪' },
-        { name: 'AR', icon: '🕶️' }, // Menu AR
+        { name: 'AR', icon: '🕶️' },
         { name: 'Test', icon: '📝' },
         { name: 'Quiz', icon: '🏆' },
         { name: 'Library', icon: '📖' },
@@ -108,8 +117,14 @@ export default function Dashboard() {
       {/* SIDEBAR */}
       <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out border-r`}>
         <div className="p-6 border-b flex justify-between items-center bg-green-600 text-white">
-          <span className="font-bold text-xl tracking-tight">BIOscope</span>
-          <button onClick={() => setIsSidebarOpen(false)} className="text-2xl">&times;</button>
+          <div className="flex items-center gap-3">
+             <img src={user?.photo || `https://ui-avatars.com/api/?name=${user?.name}&background=random`} className="w-10 h-10 rounded-full border-2 border-white shadow-md" alt="User" />
+             <div className="flex flex-col">
+                <span className="font-bold text-sm tracking-tight leading-none">{user?.name}</span>
+                <span className="text-[10px] opacity-80 uppercase">{user?.role || 'Student'}</span>
+             </div>
+          </div>
+          <button onClick={() => setIsSidebarOpen(false)} className="text-2xl hover:rotate-90 transition-transform">&times;</button>
         </div>
         <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-150px)]">
           {t.items.map((item) => (
@@ -127,7 +142,6 @@ export default function Dashboard() {
         </nav>
       </div>
 
-      {/* KONTEN UTAMA */}
       <div className="flex-1 flex flex-col h-screen overflow-y-auto relative">
         
         {/* TOP BAR */}
@@ -135,25 +149,33 @@ export default function Dashboard() {
           <button onClick={() => setIsSidebarOpen(true)} className="text-2xl p-2 hover:bg-slate-100 rounded-lg">☰</button>
           
           <div className="flex items-center gap-4">
+            {/* Language Switcher with Persistence */}
             <div className="flex bg-slate-100 p-1 rounded-full border text-[10px] font-bold">
-              <button onClick={() => setLang('id')} className={`px-3 py-1 rounded-full transition ${lang === 'id' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-400'}`}>INDONESIA</button>
-              <button onClick={() => setLang('en')} className={`px-3 py-1 rounded-full transition ${lang === 'en' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-400'}`}>ENGLISH</button>
+              <button onClick={() => changeLanguage('id')} className={`px-3 py-1 rounded-full transition ${lang === 'id' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-400'}`}>ID</button>
+              <button onClick={() => changeLanguage('en')} className={`px-3 py-1 rounded-full transition ${lang === 'en' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-400'}`}>EN</button>
             </div>
             
+            {/* User Profile Info */}
             <div className="relative">
-              <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-2 hover:bg-slate-50 p-1 pr-3 rounded-full border transition">
-                <img src={user?.photo || `https://ui-avatars.com/api/?name=${user?.name}`} alt="Avatar" className="w-8 h-8 rounded-full shadow-sm" />
-                <span className="text-xs font-bold hidden sm:block">{user?.name} ▾</span>
+              <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-2 hover:bg-slate-50 p-1 pr-3 rounded-full border transition-all active:scale-95">
+                <img src={user?.photo || `https://ui-avatars.com/api/?name=${user?.name}&background=random`} alt="Avatar" className="w-8 h-8 rounded-full shadow-sm object-cover" />
+                <div className="text-left leading-tight hidden sm:block">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{t.welcome}</p>
+                    <p className="text-xs font-black text-slate-800">{user?.name} ▾</p>
+                </div>
               </button>
               {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border p-2 z-50">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border p-2 z-50 animate-in fade-in zoom-in duration-200">
+                  <div className="p-3 mb-2 border-b text-center sm:hidden">
+                     <p className="font-bold text-xs">{user?.name}</p>
+                  </div>
                   {t.profileMenus.map(m => (
                     <button key={m} className="w-full text-left p-3 text-xs font-medium hover:bg-slate-50 rounded-xl transition">{m}</button>
                   ))}
+                  <button onClick={handleLogout} className="w-full text-left p-3 text-xs font-bold text-red-500 hover:bg-red-50 rounded-xl transition border-t mt-1">{t.logout}</button>
                 </div>
               )}
             </div>
-            <button onClick={handleLogout} className="text-sm font-bold text-red-500 hover:text-red-700 px-2 transition">{t.logout}</button>
           </div>
         </div>
 
@@ -162,6 +184,7 @@ export default function Dashboard() {
           <p className="text-slate-500 text-lg md:text-xl font-medium italic">"{t.slogan}"</p>
         </header>
 
+        {/* INPUT CODE */}
         <section className="px-6 mb-10 flex justify-center">
           <div className="w-full max-w-md bg-white p-2 rounded-2xl shadow-lg flex gap-2 border border-slate-100">
              <input 
@@ -175,6 +198,7 @@ export default function Dashboard() {
           </div>
         </section>
 
+        {/* MENU GRID */}
         <div className="px-6 max-w-6xl mx-auto w-full pb-20">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
             {t.items.map((item) => (
@@ -192,7 +216,7 @@ export default function Dashboard() {
       </div>
 
       {(isProfileOpen || isSidebarOpen) && (
-        <div onClick={() => {setIsProfileOpen(false); setIsSidebarOpen(false)}} className="fixed inset-0 z-30 bg-black/10" />
+        <div onClick={() => {setIsProfileOpen(false); setIsSidebarOpen(false)}} className="fixed inset-0 z-30 bg-black/10 backdrop-blur-[2px]" />
       )}
     </main>
   );

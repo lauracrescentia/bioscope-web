@@ -2,11 +2,11 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, Activity, User, Heart, Utensils, Zap } from "lucide-react";
+import { CheckCircle2, XCircle, Activity, User, Utensils, Zap } from "lucide-react";
 
 interface Props {
   onComplete: () => void;
-  onWrong?: () => void; // Opsional untuk mengurangi nyawa di useGameState
+  onWrong?: () => void;
 }
 
 const CAUSES_OPTIONS = [
@@ -30,7 +30,7 @@ export default function HypertensionCaseMission({ onComplete, onWrong }: Props) 
   const [isCorrect, setIsCorrect] = useState(false);
 
   const toggleSelection = (id: string, type: "cause" | "solution") => {
-    if (showResult) return; // Kunci pilihan jika hasil sudah muncul
+    if (showResult && isCorrect) return; 
     const setter = type === "cause" ? setSelectedCauses : setSelectedSolutions;
     setter((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -41,7 +41,6 @@ export default function HypertensionCaseMission({ onComplete, onWrong }: Props) 
     const correctCauses = CAUSES_OPTIONS.filter((o) => o.isCorrect).map((o) => o.id);
     const correctSolutions = SOLUTIONS_OPTIONS.filter((o) => o.isCorrect).map((o) => o.id);
 
-    // Validasi: Harus memilih SEMUA yang benar dan TIDAK memilih yang salah
     const isCausesValid =
       selectedCauses.length === correctCauses.length &&
       selectedCauses.every((id) => correctCauses.includes(id));
@@ -50,15 +49,15 @@ export default function HypertensionCaseMission({ onComplete, onWrong }: Props) 
       selectedSolutions.length === correctSolutions.length &&
       selectedSolutions.every((id) => correctSolutions.includes(id));
 
+    setShowResult(true);
+
     if (isCausesValid && isSolutionsValid) {
       setIsCorrect(true);
-      setShowResult(true);
     } else {
       setIsCorrect(false);
-      setShowResult(true);
       if (onWrong) onWrong();
       
-      // Reset setelah 2 detik agar user bisa mencoba lagi
+      // Reset otomatis hanya jika salah
       setTimeout(() => {
         setShowResult(false);
         setSelectedCauses([]);
@@ -69,12 +68,11 @@ export default function HypertensionCaseMission({ onComplete, onWrong }: Props) 
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6 flex flex-col items-center bg-white rounded-[3rem] shadow-2xl border-8 border-slate-50">
-      {/* HEADER */}
       <div className="text-center mb-8">
         <span className="bg-red-100 text-red-600 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest">
           Medical Analysis
         </span>
-        <h2 className="text-3xl font-black text-slate-900 uppercase italic mt-2">
+        <h2 className="text-2xl md:text-3xl font-black text-slate-900 uppercase italic mt-2">
           Misi 6: Analisis Hipertensi
         </h2>
       </div>
@@ -86,8 +84,8 @@ export default function HypertensionCaseMission({ onComplete, onWrong }: Props) 
             <Activity size={120} />
           </div>
           
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 bg-red-500 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-red-500/20">
+          <div className="flex items-center gap-4 mb-6 relative z-10">
+            <div className="w-16 h-16 bg-red-500 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
               <User />
             </div>
             <div>
@@ -99,16 +97,16 @@ export default function HypertensionCaseMission({ onComplete, onWrong }: Props) 
           <div className="space-y-4 relative z-10">
             <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700">
               <p className="text-red-400 text-[10px] font-black uppercase tracking-wider mb-1">Tekanan Darah</p>
-              <p className="text-2xl font-mono font-bold">150/95 <span className="text-sm">mmHg</span></p>
+              <p className="text-2xl font-mono font-bold text-white">150/95 <span className="text-sm">mmHg</span></p>
             </div>
 
             <div className="grid grid-cols-1 gap-2">
               <p className="text-slate-500 text-[10px] font-black uppercase tracking-wider">Gejala & Gaya Hidup</p>
               <ul className="text-sm space-y-2 font-medium text-slate-300">
-                <li className="flex items-center gap-2">🏃‍♂️ Jarang olahraga</li>
-                <li className="flex items-center gap-2">🧂 Diet tinggi natrium (garam)</li>
-                <li className="flex items-center gap-2">😴 Kurang tidur & sering lembur</li>
-                <li className="flex items-center gap-2">🧬 Riwayat keluarga (Ayah)</li>
+                <li>🧂 Diet tinggi natrium (garam)</li>
+                <li>🏃‍♂️ Jarang olahraga</li>
+                <li>😴 Kurang tidur & sering lembur</li>
+                <li>🧬 Riwayat keluarga</li>
               </ul>
             </div>
           </div>
@@ -116,7 +114,6 @@ export default function HypertensionCaseMission({ onComplete, onWrong }: Props) 
 
         {/* INTERAKSI USER */}
         <div className="flex flex-col gap-6">
-          {/* Bagian Penyebab */}
           <div className="space-y-3">
             <h4 className="font-black text-slate-800 uppercase text-sm flex items-center gap-2">
               <Utensils size={16} className="text-red-500" /> Identifikasi Penyebab:
@@ -139,7 +136,6 @@ export default function HypertensionCaseMission({ onComplete, onWrong }: Props) 
             </div>
           </div>
 
-          {/* Bagian Solusi */}
           <div className="space-y-3">
             <h4 className="font-black text-slate-800 uppercase text-sm flex items-center gap-2">
               <Zap size={16} className="text-green-500" /> Rekomendasi Solusi:
@@ -167,46 +163,44 @@ export default function HypertensionCaseMission({ onComplete, onWrong }: Props) 
       {/* RESULT & BUTTON */}
       <div className="mt-10 w-full max-w-md">
         <AnimatePresence mode="wait">
-          {showResult ? (
+          {!showResult ? (
+            <motion.button
+              key="btn-check"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCheck}
+              disabled={selectedCauses.length === 0 || selectedSolutions.length === 0}
+              // PERBAIKAN: text-white agar teks terlihat jelas
+              className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-xl hover:bg-blue-600 transition-all shadow-xl disabled:opacity-30 uppercase"
+            >
+              Check Analysis 🩺
+            </motion.button>
+          ) : (
             <motion.div
+              key="result-msg"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className={`p-4 rounded-2xl flex items-center justify-center gap-3 font-black text-white ${
+              className={`p-5 rounded-2xl flex flex-col items-center gap-3 font-black text-white shadow-lg ${
                 isCorrect ? "bg-green-500" : "bg-red-500"
               }`}
             >
-              {isCorrect ? (
-                <>
-                  <CheckCircle2 /> ANALISIS TEPAT! LANJUTKAN...
-                </>
-              ) : (
-                <>
-                  <XCircle /> MASIH ADA YANG SALAH, ULANGI!
-                </>
+              <div className="flex items-center gap-2">
+                {isCorrect ? <CheckCircle2 /> : <XCircle />}
+                {isCorrect ? "ANALISIS TEPAT!" : "ADA YANG SALAH!"}
+              </div>
+              
+              {isCorrect && (
+                <button
+                  onClick={onComplete}
+                  className="mt-2 w-full bg-white text-green-600 py-3 rounded-xl font-black uppercase text-sm hover:bg-slate-50 transition-colors shadow-sm"
+                >
+                  Lanjut ke Misi Berikutnya 🚀
+                </button>
               )}
             </motion.div>
-          ) : (
-            <button
-              onClick={handleCheck}
-              disabled={selectedCauses.length === 0 || selectedSolutions.length === 0}
-              className="w-full bg-slate-900 text-black py-5 rounded-2xl font-black text-xl hover:bg-red-600 transition-all shadow-xl disabled:opacity-20 uppercase tracking-tight"
-            >
-              Check Analysis 🩺
-            </button>
           )}
         </AnimatePresence>
-
-        {isCorrect && (
-          <motion.button
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            onClick={onComplete}
-            className="w-full mt-4 bg-green-100 text-green-700 py-4 rounded-2xl font-black hover:bg-green-200 transition-all uppercase text-sm border-2 border-green-200"
-          >
-            Selesaikan Pelatihan Medis 🎓
-          </motion.button>
-        )}
       </div>
     </div>
   );

@@ -8,28 +8,51 @@ export default function SettingsPage() {
   // States
   const [lang, setLang] = useState<'id' | 'en'>('id');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [userData, setUserData] = useState<any>(null);
 
-  // Load data dari LocalStorage
+  // Load data dari LocalStorage saat pertama kali buka
   useEffect(() => {
+    // 1. Ambil Bahasa (Gunakan key yang sama dengan Dashboard: app_lang)
     const savedLang = localStorage.getItem('app_lang') as 'id' | 'en';
-    const savedEmail = localStorage.getItem('user_email');
     if (savedLang) setLang(savedLang);
-    if (savedEmail) setEmail(savedEmail);
+
+    // 2. Ambil Data User Lengkap
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setUserData(parsedUser);
+      setEmail(parsedUser.email || '');
+    }
   }, []);
 
   const handleSave = () => {
+    // 1. Simpan Bahasa secara Permanen
     localStorage.setItem('app_lang', lang);
-    localStorage.setItem('user_email', email);
     
+    // 2. Update Data User (Email & Password)
+    if (userData) {
+      const updatedUser = { ...userData };
+      updatedUser.email = email;
+      
+      // Jika password diisi, maka update passwordnya
+      if (newPassword.trim() !== "") {
+        updatedUser.password = newPassword;
+      }
+
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+
     const msg = lang === 'id' 
       ? "Pengaturan Berhasil Disimpan! ⚙️" 
       : "Settings Saved Successfully! ⚙️";
+    
     alert(msg);
+    
+    // Opsional: Refresh atau pindah halaman agar perubahan bahasa langsung terasa
+    window.location.href = '/dashboard'; 
   };
 
-  // Kamus Bahasa Sederhana
   const t = {
     id: {
       title: "Pengaturan",
@@ -55,13 +78,13 @@ export default function SettingsPage() {
 
   return (
     <main className="min-h-screen bg-[#F0F4F8] p-6 font-sans flex items-center justify-center text-[#0f172a]">
-      <div className="w-full max-w-2xl bg-white border-4 border-black rounded-[3rem] shadow-[12px_12px_0_0_#000] p-8 md:p-12 relative overflow-hidden">
+      <div className="w-full max-w-2xl bg-white border-4 border-black rounded-[2.5rem] shadow-[12px_12px_0_0_#000] p-8 md:p-12 relative overflow-hidden">
         
         {/* Dekorasi Aksesoris */}
-        <div className="absolute -top-6 -right-6 w-24 h-24 bg-indigo-500 rounded-full border-4 border-black -z-0"></div>
+        <div className="absolute -top-6 -right-6 w-20 h-20 bg-indigo-500 rounded-full border-4 border-black -z-0"></div>
 
         <div className="relative z-10">
-          <h1 className="text-5xl font-black italic uppercase tracking-tighter mb-10 border-b-4 border-black pb-4">
+          <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter mb-10 border-b-4 border-black pb-4">
             {t.title}
           </h1>
 
@@ -100,19 +123,23 @@ export default function SettingsPage() {
               
               <div className="flex flex-col gap-3">
                 <button 
+                  type="button"
                   onClick={() => setLang('id')}
                   className={`p-5 rounded-2xl border-4 border-black font-black flex justify-between items-center transition-all
-                    ${lang === 'id' ? 'bg-yellow-400 shadow-[4px_4px_0_0_#000] translate-x-[-2px] translate-y-[-2px]' : 'bg-slate-50 opacity-50'}`}
+                    ${lang === 'id' ? 'bg-yellow-400 shadow-[4px_4px_0_0_#000] translate-x-[-2px] translate-y-[-2px]' : 'bg-slate-50 opacity-50 hover:opacity-100'}`}
                 >
-                  BAHASA INDONESIA 🇮🇩
+                  INDONESIA 🇮🇩
+                  {lang === 'id' && <span className="text-xs">✔️</span>}
                 </button>
 
                 <button 
+                  type="button"
                   onClick={() => setLang('en')}
                   className={`p-5 rounded-2xl border-4 border-black font-black flex justify-between items-center transition-all
-                    ${lang === 'en' ? 'bg-indigo-500 text-white shadow-[4px_4px_0_0_#000] translate-x-[-2px] translate-y-[-2px]' : 'bg-slate-50 opacity-50'}`}
+                    ${lang === 'en' ? 'bg-indigo-500 text-white shadow-[4px_4px_0_0_#000] translate-x-[-2px] translate-y-[-2px]' : 'bg-slate-50 opacity-50 hover:opacity-100'}`}
                 >
                   ENGLISH 🇺🇸
+                  {lang === 'en' && <span className="text-xs">✔️</span>}
                 </button>
               </div>
             </div>
@@ -121,6 +148,7 @@ export default function SettingsPage() {
           {/* TOMBOL AKSI */}
           <div className="mt-12 flex flex-col md:flex-row items-center justify-between gap-6 border-t-4 border-black pt-8">
             <button 
+              type="button"
               onClick={() => router.back()}
               className="font-black uppercase text-sm underline decoration-4 underline-offset-4 hover:text-indigo-600 transition-colors"
             >
@@ -128,8 +156,9 @@ export default function SettingsPage() {
             </button>
 
             <button 
+              type="button"
               onClick={handleSave}
-              className="w-full md:w-auto px-10 py-5 bg-black text-white rounded-2xl font-black text-xl shadow-[6px_6px_0_0_#FACC15] hover:translate-y-1 hover:shadow-none transition-all uppercase italic"
+              className="w-full md:w-auto px-10 py-5 bg-black text-white rounded-2xl font-black text-xl shadow-[6px_6px_0_0_#FACC15] active:translate-y-1 active:shadow-none transition-all uppercase italic"
             >
               {t.save}
             </button>

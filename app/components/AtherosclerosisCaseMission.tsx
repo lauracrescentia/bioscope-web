@@ -14,9 +14,8 @@ import {
   LineElement
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { Activity, TrendingUp, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react";
+import { Activity, CheckCircle2, AlertCircle } from "lucide-react";
 
-// Registrasi ChartJS
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -78,7 +77,8 @@ export default function AtherosclerosisCaseMission({ onComplete, onWrong }: Prop
     scales: { y: { beginAtZero: true } }
   };
 
-  const handleToggle = (id: string, type: "risk" | "solution") => {
+  const handleToggle = (e: React.MouseEvent, id: string, type: "risk" | "solution") => {
+    e.preventDefault(); // MENCEGAH REFRESH HALAMAN
     setIsError(false);
     if (type === "risk") {
       setSelectedRisks(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -87,7 +87,8 @@ export default function AtherosclerosisCaseMission({ onComplete, onWrong }: Prop
     }
   };
 
-  const validate = () => {
+  const validate = (e: React.MouseEvent) => {
+    e.preventDefault(); // MENCEGAH REFRESH KE HALAMAN UTAMA
     const correctRisks = RISK_OPTIONS.filter(o => o.isCorrect).map(o => o.id);
     const correctSols = SOLUTION_OPTIONS.filter(o => o.isCorrect).map(o => o.id);
 
@@ -104,17 +105,15 @@ export default function AtherosclerosisCaseMission({ onComplete, onWrong }: Prop
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100">
-      {/* Header */}
       <div className="bg-slate-900 p-6 text-white flex justify-between items-center">
         <div className="flex items-center gap-3">
           <Activity className="text-red-500" />
-          <h2 className="font-black uppercase tracking-tighter italic text-xl">Analisis Plak Arteri</h2>
+          <h2 className="font-black uppercase tracking-tighter italic text-xl text-white">Analisis Plak Arteri</h2>
         </div>
       </div>
 
       <div className="p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Left Area: Chart */}
           <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 h-64 flex flex-col">
              <p className="text-[10px] font-black text-slate-500 mb-2 uppercase text-center">Kadar Lemak Darah (mg/dL)</p>
              <div className="flex-1">
@@ -122,7 +121,6 @@ export default function AtherosclerosisCaseMission({ onComplete, onWrong }: Prop
              </div>
           </div>
 
-          {/* Right Area: Options */}
           <div className="space-y-4">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pilih Diagnosis & Solusi:</p>
             <div className="grid gap-2">
@@ -133,11 +131,12 @@ export default function AtherosclerosisCaseMission({ onComplete, onWrong }: Prop
                 return (
                   <button 
                     key={opt.id}
-                    onClick={() => handleToggle(opt.id, isRisk ? "risk" : "solution")}
+                    type="button" // MEMASTIKAN BUKAN TYPE SUBMIT
+                    onClick={(e) => handleToggle(e, opt.id, isRisk ? "risk" : "solution")}
                     className={`w-full text-left p-3 rounded-xl border-2 font-black text-[11px] transition-all uppercase ${
                       isSelected 
-                        ? "border-red-600 bg-red-50 text-black shadow-inner scale-[0.98]" 
-                        : "border-slate-200 bg-white text-black hover:border-slate-400"
+                        ? "border-red-600 bg-red-50 text-red-700 shadow-inner" 
+                        : "border-slate-100 bg-white text-slate-600 hover:border-slate-300"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -151,7 +150,6 @@ export default function AtherosclerosisCaseMission({ onComplete, onWrong }: Prop
           </div>
         </div>
 
-        {/* Footer Action */}
         <div className="mt-8 border-t pt-8">
           <AnimatePresence mode="wait">
             {!showResult ? (
@@ -162,8 +160,9 @@ export default function AtherosclerosisCaseMission({ onComplete, onWrong }: Prop
                   </motion.div>
                 )}
                 <button 
+                  type="button"
                   onClick={validate} 
-                  className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-red-600 transition-all uppercase shadow-xl active:scale-95"
+                  className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-600 transition-all uppercase shadow-xl active:scale-95"
                 >
                   Verifikasi Diagnosis 🧪
                 </button>
@@ -172,13 +171,14 @@ export default function AtherosclerosisCaseMission({ onComplete, onWrong }: Prop
               <motion.div 
                 initial={{ scale: 0.8, opacity: 0 }} 
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-green-600 p-8 rounded-[2rem] text-center text-white shadow-2xl shadow-green-100"
+                className="bg-green-600 p-8 rounded-[2rem] text-center text-white shadow-2xl"
               >
                 <CheckCircle2 size={48} className="mx-auto mb-4" />
                 <h3 className="text-2xl font-black uppercase italic mb-6">Misi Selesai: Arteri Bersih!</h3>
                 <button 
-                  onClick={onComplete} 
-                  className="bg-white text-green-600 px-12 py-4 rounded-2xl font-black uppercase text-xl hover:bg-slate-100 transition-colors shadow-lg"
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); onComplete(); }} 
+                  className="bg-white text-green-600 px-12 py-4 rounded-2xl font-black uppercase text-xl hover:bg-slate-100 shadow-lg"
                 >
                   LULUS PELATIHAN 🎓
                 </button>
