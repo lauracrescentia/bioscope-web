@@ -35,20 +35,29 @@ export default function Dashboard() {
     window.location.href = '/';
   };
 
+  // PERBAIKAN 1: Logika Join Code yang lebih fleksibel
   const handleJoinCode = () => {
     const code = accessCode.toUpperCase().trim();
     if (!code) return alert(lang === 'id' ? "Masukkan kode dulu!" : "Enter code first!");
 
-    if (code.startsWith('GAME')) router.push(`/games?code=${code}`);
-    else if (code.startsWith('QUIZ')) router.push(`/quiz?code=${code}`);
-    else if (code.startsWith('TEST')) router.push(`/test/run?code=${code}`);
+    // Mendukung awalan BIO- (sesuai gambar Ibu) dan GAME-
+    if (code.startsWith('GAME') || code.startsWith('BIO')) {
+      router.push(`/quiz/play?code=${code}`);
+    } 
+    else if (code.startsWith('QUIZ')) {
+      router.push(`/quiz/play?code=${code}`);
+    }
+    else if (code.startsWith('TEST')) {
+      router.push(`/test/run?code=${code}`);
+    }
     else {
       alert(lang === 'id' 
-        ? "Kode tidak dikenali. Gunakan awalan GAME-, QUIZ-, atau TEST-" 
-        : "Invalid code. Use prefix GAME-, QUIZ-, or TEST-");
+        ? "Kode tidak dikenali. Gunakan awalan BIO-, GAME-, atau QUIZ-" 
+        : "Invalid code. Use prefix BIO-, GAME-, or QUIZ-");
     }
   };
 
+  // PERBAIKAN 2: Navigasi Menu
   const handleMenuClick = (name: string) => {
     const n = name.toLowerCase().trim();
     
@@ -58,7 +67,7 @@ export default function Dashboard() {
     else if (n === 'augmented reality' || n === 'ar') router.push('/ar'); 
     else if (n === 'ujian' || n === 'test') router.push(user?.role === 'teacher' ? '/test' : '/test/run');
     else if (n === 'kuis' || n === 'quiz') router.push('/quiz');
-    // MENU BARU: Navigasi ke folder /mood-beats
+    // Pastikan folder app/mood-beats/page.tsx sudah ada
     else if (n === 'mood beats' || n === 'bio-rhythm') router.push('/mood-beats');
     else if (n === 'jurnal belajar' || n === 'learning journal') router.push('/journal'); 
     else if (n === 'perpustakaan' || n === 'library') router.push('/library');
@@ -72,7 +81,7 @@ export default function Dashboard() {
       welcome: "Selamat Datang,",
       slogan: "Discover the Fascinating World of Biology",
       logout: "Keluar",
-      placeholder: "Contoh: GAME-123, QUIZ-BIO",
+      placeholder: "Contoh: BIO-9994, GAME-123",
       joinBtn: "Join",
       profileMenus: ["Ganti Foto", "Ubah Username"],
       items: [
@@ -82,7 +91,7 @@ export default function Dashboard() {
         { name: 'Augmented Reality', icon: '🕶️' },
         { name: 'Ujian', icon: '📝' },
         { name: 'Kuis', icon: '🏆' },
-        { name: 'Mood Beats', icon: '🎵' }, // Tambahan Menu Baru
+        { name: 'Mood Beats', icon: '🎵' },
         { name: 'Jurnal Belajar', icon: '✍️' }, 
         { name: 'Laporan', icon: '📊' },
         { name: 'Perpustakaan', icon: '📖' },
@@ -94,7 +103,7 @@ export default function Dashboard() {
       welcome: "Welcome back,",
       slogan: "Discover the Fascinating World of Biology",
       logout: "Quit",
-      placeholder: "e.g., GAME-123, QUIZ-BIO",
+      placeholder: "e.g., BIO-9994, GAME-123",
       joinBtn: "Join",
       profileMenus: ["Change Photo", "Change Username"],
       items: [
@@ -104,7 +113,7 @@ export default function Dashboard() {
         { name: 'AR', icon: '🕶️' },
         { name: 'Test', icon: '📝' },
         { name: 'Quiz', icon: '🏆' },
-        { name: 'Bio-Rhythm', icon: '🎵' }, // Tambahan Menu Baru (EN)
+        { name: 'Bio-Rhythm', icon: '🎵' },
         { name: 'Learning Journal', icon: '✍️' }, 
         { name: 'Reports', icon: '📊' },
         { name: 'Library', icon: '📖' },
@@ -180,11 +189,12 @@ export default function Dashboard() {
         </div>
 
         <header className="flex flex-col items-center justify-center pt-12 pb-10 px-4 text-center">
-          <Image src="/logo.png" alt="Logo" width={180} height={180} className="mb-4 mix-blend-multiply" priority />
+          {/* PERBAIKAN: Gunakan <img> standar jika Image Next.js bermasalah dengan path logo */}
+          <img src="/logo.png" alt="Logo" className="w-40 mb-4 mix-blend-multiply" />
           <p className="text-slate-500 text-lg md:text-xl font-medium italic">"{t.slogan}"</p>
         </header>
 
-        {/* INPUT CODE */}
+        {/* INPUT CODE SECTION */}
         <section className="px-6 mb-10 flex justify-center">
           <div className="w-full max-w-md bg-white p-2 rounded-2xl shadow-lg flex gap-2 border border-slate-100">
              <input 
