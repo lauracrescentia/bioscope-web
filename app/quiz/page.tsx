@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 export default function GamesPage() {
   const [user, setUser] = useState<any>(null);
   const [lang, setLang] = useState<'id' | 'en'>('id');
-  const [gameCode, setGameCode] = useState('');
+  const [gameCode, setGameCode] = useState(''); // Input kode untuk siswa
   const [library, setLibrary] = useState<any[]>([]);
   
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -23,12 +23,54 @@ export default function GamesPage() {
     if (storedLibrary) setLibrary(JSON.parse(storedLibrary));
   }, []);
 
-  const generateRandomCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
-
+  // 1. LOGIKA GENERATE KODE (Disamakan dengan format BIO-XXXX)
   const handleHostLive = (quiz: any) => {
-    setGeneratedCode(generateRandomCode());
+    const code = `BIO-${Math.floor(1000 + Math.random() * 9000)}`;
+    setGeneratedCode(code);
     setSelectedQuiz(quiz);
     setShowHostModal(true);
+  };
+
+  // 2. LOGIKA TOMBOL "MULAI 🚀" (Pindah ke Dashboard Host)
+  const confirmStartHost = () => {
+    if (!selectedQuiz) return;
+    
+    // Simpan informasi kuis ke "Server Lokal" agar siswa bisa nemuin kuisnya
+    const sessionInfo = {
+      code: generatedCode,
+      gameName: selectedQuiz.name,
+      questions: selectedQuiz.questions,
+      status: 'waiting',
+      hostName: user.name
+    };
+    
+    localStorage.setItem(`active_session_${generatedCode}`, JSON.stringify(sessionInfo));
+    
+    // Arahkan ke halaman Host Live yang kita buat tadi
+    // Pastikan path-nya sesuai, di sini saya asumsikan /quiz/host/[id]
+    router.push(`/quiz/host/${selectedQuiz.id}`);
+  };
+
+  // 3. LOGIKA JOIN UNTUK SISWA
+  const handleStudentJoin = () => {
+    if (!gameCode) return alert("Masukkan kode dulu, yuk!");
+    
+    const sessionData = localStorage.getItem(`active_session_${gameCode}`);
+    
+    if (sessionData) {
+      const session = JSON.parse(sessionData);
+      
+      if (session.status === 'ended') {
+        alert("Yah, kuis ini sudah selesai!");
+      } else {
+        // Simpan data kuis yang mau dimainkan siswa ke temporary storage
+        localStorage.setItem('current_play_session', sessionData);
+        // Arahkan ke halaman pengerjaan soal siswa
+        router.push('/quiz/play'); 
+      }
+    } else {
+      alert("Kode kuis tidak ditemukan. Pastikan kodenya benar ya!");
+    }
   };
 
   const handleOpenAssign = (quiz: any) => {
@@ -37,9 +79,8 @@ export default function GamesPage() {
   };
 
   const confirmAssign = () => {
-    const code = generateRandomCode();
-    setGeneratedCode(code);
-    alert(`Kuis "${selectedQuiz.name}" Berhasil di-Assign!\nKODE: ${code}`);
+    const code = `HW-${Math.floor(1000 + Math.random() * 9000)}`;
+    alert(`Kuis "${selectedQuiz.name}" Berhasil di-PR-kan!\nKODE: ${code}`);
     setShowAssignModal(false);
   };
 
@@ -77,24 +118,32 @@ export default function GamesPage() {
     return (
       <main className="min-h-screen bg-[#f8fafc] p-6 md:p-10 text-black font-sans relative">
         
-        {/* --- MODAL HOST LIVE (UKURAN LEBIH KECIL) --- */}
+        {/* --- MODAL HOST LIVE --- */}
         {showHostModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white border-4 border-black w-full max-w-sm rounded-[2rem] p-6 text-center shadow-[10px_10px_0_0_#000]">
+            <div className="bg-white border-4 border-black w-full max-w-sm rounded-[2rem] p-6 text-center shadow-[10px_10px_0_0_#000] animate-in zoom-in duration-200">
               <div className="inline-block px-4 py-1 bg-red-500 text-white font-black rounded-full mb-4 text-xs animate-pulse">LIVE SESSION</div>
-              <h2 className="text-xl font-black uppercase italic mb-4">Siap Main?</h2>
-              <div className="bg-indigo-50 border-2 border-dashed border-indigo-400 p-4 rounded-xl mb-6">
-                <span className="text-4xl font-black tracking-widest text-indigo-600">{generatedCode}</span>
+              <h2 className="text-xl font-black uppercase italic mb-2">Siap Main?</h2>
+              <p className="text-[10px] font-bold text-slate-400 mb-4 uppercase">Siswa akan join menggunakan kode di bawah</p>
+              
+              <div className="bg-indigo-50 border-4 border-black p-4 rounded-2xl mb-6 shadow-[4px_4px_0_0_#4f46e5]">
+                <span className="text-4xl font-black tracking-tight text-indigo-600">{generatedCode}</span>
               </div>
+
               <div className="flex gap-3">
-                <button onClick={() => setShowHostModal(false)} className="flex-1 py-2 font-black border-2 border-black rounded-xl hover:bg-slate-100 transition-all text-xs">BATAL</button>
-                <button className="flex-1 py-2 bg-indigo-600 text-white font-black border-2 border-black rounded-xl shadow-[3px_3px_0_0_#000] hover:translate-y-0.5 hover:shadow-none transition-all text-xs">MULAI 🚀</button>
+                <button onClick={() => setShowHostModal(false)} className="flex-1 py-3 font-black border-2 border-black rounded-xl hover:bg-slate-100 transition-all text-xs">BATAL</button>
+                <button 
+                  onClick={confirmStartHost}
+                  className="flex-1 py-3 bg-indigo-600 text-white font-black border-2 border-black rounded-xl shadow-[4px_4px_0_0_#000] hover:translate-y-0.5 hover:shadow-none transition-all text-xs"
+                >
+                  MULAI 🚀
+                </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* --- MODAL ASSIGN (UKURAN LEBIH KECIL) --- */}
+        {/* --- MODAL ASSIGN --- */}
         {showAssignModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white border-4 border-black w-full max-w-sm rounded-[2rem] p-6 shadow-[10px_10px_0_0_#6366f1]">
@@ -129,22 +178,15 @@ export default function GamesPage() {
         </header>
 
         <div className="max-w-7xl mx-auto grid grid-cols-12 gap-8">
-          
-          {/* --- CREATE SECTION (Perbaikan Kontras) --- */}
+          {/* CREATE SECTION */}
           <div className="col-span-12 lg:col-span-7">
              <section className="bg-white border-4 border-black p-8 rounded-[3rem] shadow-[10px_10px_0_0_#000]">
                 <h2 className="text-2xl font-black uppercase italic mb-6">{t.create}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <button 
-                    onClick={() => router.push('/quiz/create-scratch')} 
-                    className="p-8 bg-indigo-600 rounded-[2rem] border-4 border-black shadow-[6px_6px_0_0_#000] text-left hover:brightness-110 transition-all group"
-                   >
+                   <button onClick={() => router.push('/quiz/create-scratch')} className="p-8 bg-indigo-600 rounded-[2rem] border-4 border-black shadow-[6px_6px_0_0_#000] text-left hover:brightness-110 transition-all group">
                      <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">📄</div>
-                     {/* Teks Hitam Solid agar Terlihat Jelas */}
-                     <div className="text-black uppercase italic font-black text-2xl tracking-tight leading-none mb-1">
-                        {t.blank}
-                     </div>
-                     <p className="text-hitam/80 text-[11px] font-bold">Mulai kuis dari awal</p>
+                     <div className="text-white uppercase italic font-black text-2xl tracking-tight leading-none mb-1">{t.blank}</div>
+                     <p className="text-white/80 text-[11px] font-bold text-black">Mulai kuis dari awal</p>
                    </button>
                    
                    <button className="p-8 bg-slate-200 rounded-[2rem] border-4 border-black shadow-[6px_6px_0_0_#000] text-left opacity-60">
@@ -156,12 +198,16 @@ export default function GamesPage() {
              </section>
           </div>
 
-          {/* --- LIBRARY SECTION --- */}
+          {/* LIBRARY SECTION */}
           <div className="col-span-12 lg:col-span-5">
             <aside className="bg-yellow-400 border-4 border-black p-6 rounded-[3rem] shadow-[10px_10px_0_0_#000]">
               <h2 className="text-2xl font-black uppercase italic mb-6 flex items-center gap-2">📚 {t.library}</h2>
               <div className="space-y-4 overflow-y-auto max-h-[500px] pr-2 custom-scrollbar">
-                {library.map((quiz) => (
+                {library.length === 0 ? (
+                  <div className="text-center py-10 border-2 border-black border-dashed rounded-2xl bg-white/50">
+                    <p className="font-black uppercase italic text-slate-500">Belum ada kuis</p>
+                  </div>
+                ) : library.map((quiz) => (
                   <div key={quiz.id} className="bg-white border-4 border-black p-5 rounded-2xl shadow-[5px_5px_0_0_#000]">
                     <div className="flex justify-between items-start mb-4">
                       <div className="max-w-[70%]">
@@ -200,17 +246,31 @@ export default function GamesPage() {
 
   // Tampilan Siswa
   return (
-    <main className="min-h-screen bg-indigo-600 flex items-center justify-center p-6 text-center">
-       <div className="bg-white p-10 rounded-[4rem] border-8 border-black shadow-[20px_20px_0_0_#000] w-full max-w-md">
-          <h1 className="text-4xl font-black uppercase italic mb-8 tracking-tighter">Bioscope Join</h1>
-          <input 
-            type="text" 
-            value={gameCode}
-            onChange={(e) => setGameCode(e.target.value.toUpperCase())}
-            placeholder="KODE GAME"
-            className="w-full p-6 bg-slate-100 border-4 border-black rounded-3xl text-4xl font-black text-center mb-4 focus:bg-yellow-300 outline-none"
-          />
-          <button className="w-full py-6 bg-indigo-600 text-white border-4 border-black rounded-3xl font-black text-2xl shadow-[6px_6px_0_0_#000] hover:translate-y-1 transition-all">GABUNG</button>
+    <main className="min-h-screen bg-indigo-600 flex items-center justify-center p-6 text-center font-sans">
+       <div className="bg-white p-10 rounded-[4rem] border-8 border-black shadow-[20px_20px_0_0_#000] w-full max-w-md animate-in slide-in-from-bottom-10 duration-500">
+          <h1 className="text-4xl font-black uppercase italic mb-8 tracking-tighter leading-none">Bioscope <span className="text-indigo-600">Join</span></h1>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 block mb-2 tracking-[0.2em]">Masukkan Kode Game</label>
+              <input 
+                type="text" 
+                value={gameCode}
+                onChange={(e) => setGameCode(e.target.value.toUpperCase())}
+                placeholder="CONTOH: BIO-1234"
+                className="w-full p-6 bg-slate-100 border-4 border-black rounded-3xl text-3xl font-black text-center focus:bg-yellow-300 outline-none transition-all placeholder:text-slate-300"
+              />
+            </div>
+            
+            <button 
+              onClick={handleStudentJoin}
+              className="w-full py-6 bg-indigo-600 text-white border-4 border-black rounded-3xl font-black text-2xl shadow-[6px_6px_0_0_#000] hover:translate-y-1 hover:shadow-none active:scale-95 transition-all"
+            >
+              GABUNG SEKARANG
+            </button>
+          </div>
+
+          <p className="mt-8 text-[10px] font-bold text-slate-400 uppercase italic">Tunggu instruksi dari gurumu untuk mulai!</p>
        </div>
     </main>
   );

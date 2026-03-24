@@ -50,7 +50,6 @@ export default function Dashboard() {
   };
 
   const handleMenuClick = (name: string) => {
-    // Normalisasi input: huruf kecil dan hapus spasi berlebih
     const n = name.toLowerCase().trim();
     
     if (n === 'materi' || n === 'materials') router.push('/materi');
@@ -59,10 +58,11 @@ export default function Dashboard() {
     else if (n === 'augmented reality' || n === 'ar') router.push('/ar'); 
     else if (n === 'ujian' || n === 'test') router.push(user?.role === 'teacher' ? '/test' : '/test/run');
     else if (n === 'kuis' || n === 'quiz') router.push('/quiz');
+    // MENU BARU: Navigasi ke folder /mood-beats
+    else if (n === 'mood beats' || n === 'bio-rhythm') router.push('/mood-beats');
+    else if (n === 'jurnal belajar' || n === 'learning journal') router.push('/journal'); 
     else if (n === 'perpustakaan' || n === 'library') router.push('/library');
     else if (n === 'laporan' || n === 'reports') router.push('/reports');
-    // PERBAIKAN DI SINI: Pastikan route sesuai dengan folder /app/journal
-    else if (n === 'jurnal belajar' || n === 'learning journal') router.push('/journal'); 
     else if (n === 'profil' || n === 'profile') router.push('/profile');
     else if (n === 'pengaturan' || n === 'settings') router.push('/settings');
   };
@@ -82,6 +82,7 @@ export default function Dashboard() {
         { name: 'Augmented Reality', icon: '🕶️' },
         { name: 'Ujian', icon: '📝' },
         { name: 'Kuis', icon: '🏆' },
+        { name: 'Mood Beats', icon: '🎵' }, // Tambahan Menu Baru
         { name: 'Jurnal Belajar', icon: '✍️' }, 
         { name: 'Laporan', icon: '📊' },
         { name: 'Perpustakaan', icon: '📖' },
@@ -103,6 +104,7 @@ export default function Dashboard() {
         { name: 'AR', icon: '🕶️' },
         { name: 'Test', icon: '📝' },
         { name: 'Quiz', icon: '🏆' },
+        { name: 'Bio-Rhythm', icon: '🎵' }, // Tambahan Menu Baru (EN)
         { name: 'Learning Journal', icon: '✍️' }, 
         { name: 'Reports', icon: '📊' },
         { name: 'Library', icon: '📖' },

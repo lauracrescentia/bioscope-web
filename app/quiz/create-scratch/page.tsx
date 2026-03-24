@@ -1,6 +1,6 @@
 "use client";
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 type QuestionType = 'quiz' | 'multiple' | 'true-false';
 
@@ -16,6 +16,9 @@ interface Question {
 
 export default function BlankCanvas() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('id'); // Ambil ID dari URL (?id=...)
+
   const [gameName, setGameName] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentView, setCurrentView] = useState<'editor' | 'selector'>('selector');
@@ -30,6 +33,19 @@ export default function BlankCanvas() {
     correctAnswers: [],
     timeLimit: 30
   });
+
+  // LOGIKA BARU: Load data jika sedang dalam mode EDIT
+  useEffect(() => {
+    if (editId) {
+      const library = JSON.parse(localStorage.getItem('game_library') || '[]');
+      const targetGame = library.find((g: any) => g.id === parseInt(editId));
+      
+      if (targetGame) {
+        setGameName(targetGame.name);
+        setQuestions(targetGame.questions);
+      }
+    }
+  }, [editId]);
 
   const changeType = (type: QuestionType) => {
     setEditingQ({
@@ -83,37 +99,44 @@ export default function BlankCanvas() {
     setCurrentView('editor');
   };
 
-  // FUNGSI UTAMA UNTUK SIMPAN DATA KE LOCALSTORAGE
+  // LOGIKA BARU: Simpan atau Update
   const processFinalSave = () => {
     const finalName = gameName.trim() || "Kuis Tanpa Judul";
-    
-    const gameData = { 
-      id: Date.now(),
-      name: finalName, 
-      questions: questions, 
-      createdAt: new Date().toISOString() 
-    };
-
     const existingLibrary = JSON.parse(localStorage.getItem('game_library') || '[]');
-    localStorage.setItem('game_library', JSON.stringify([...existingLibrary, gameData]));
+    
+    let updatedLibrary;
+
+    if (editId) {
+      // MODE UPDATE: Cari kuis lama dan ganti isinya
+      updatedLibrary = existingLibrary.map((g: any) => 
+        g.id === parseInt(editId) 
+          ? { ...g, name: finalName, questions: questions } 
+          : g
+      );
+    } else {
+      // MODE BARU: Tambah kuis baru ke daftar
+      const gameData = { 
+        id: Date.now(),
+        name: finalName, 
+        questions: questions, 
+        createdAt: new Date().toISOString() 
+      };
+      updatedLibrary = [...existingLibrary, gameData];
+    }
+
+    localStorage.setItem('game_library', JSON.stringify(updatedLibrary));
     return finalName;
   };
 
-  // KLIK QUIT: Simpan draft diam-diam lalu ke Home
   const handleQuit = () => {
-    if (questions.length > 0) {
-      processFinalSave();
-    }
-    router.push('/quiz'); // Kembali ke halaman utama kuis
+    router.push('/quiz'); 
   };
 
-  // KLIK SAVE: Simpan dengan notifikasi lalu ke Home
   const handleSaveFinal = () => {
     if (questions.length === 0) return alert("Tambahkan minimal 1 soal dulu!");
-    
     const savedName = processFinalSave();
-    alert(`Berhasil! "${savedName}" sudah tersimpan.`);
-    router.push('/quiz'); // Kembali ke halaman utama kuis
+    alert(`Berhasil! "${savedName}" sudah diperbarui.`);
+    router.push('/quiz'); 
   };
 
   return (
@@ -141,7 +164,7 @@ export default function BlankCanvas() {
             onClick={handleSaveFinal} 
             className="px-6 py-4 bg-[#22C55E] text-white rounded-2xl font-black border-4 border-[#0F172A] shadow-[4px_4px_0_0_#0F172A] active:shadow-none active:translate-y-1 transition-all uppercase italic flex items-center gap-2"
           >
-            <span>💾</span> Save
+            <span>💾</span> {editId ? 'Update' : 'Save'}
           </button>
         </div>
       </div>

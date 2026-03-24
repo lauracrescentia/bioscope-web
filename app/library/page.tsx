@@ -31,24 +31,26 @@ export default function GameLibrary() {
     <main className="min-h-screen bg-[#F0F4F8] p-8 font-sans text-[#0F172A]">
       <div className="max-w-6xl mx-auto">
         
-        {/* Header */}
+        {/* Tombol Back ke Dashboard - Biar ga bingung balik ke menu utama */}
+        <button 
+          onClick={() => router.push('/dashboard')} 
+          className="mb-8 px-4 py-2 border-4 border-black bg-white font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all text-xs"
+        >
+          ← Dashboard
+        </button>
+
+        {/* Header - Tombol Buat Baru sudah dihapus */}
         <div className="flex justify-between items-end mb-12">
           <div>
             <h1 className="text-5xl font-black italic uppercase tracking-tighter">My Library</h1>
             <p className="text-slate-500 font-bold uppercase text-xs tracking-[0.2em]">Total: {games.length} Aktivitas</p>
           </div>
-          <button 
-            onClick={() => router.push('/quiz/create')}
-            className="px-8 py-4 bg-[#6366F1] text-white rounded-2xl font-black border-4 border-black shadow-[6px_6px_0_0_#000] hover:-translate-y-1 transition-all uppercase italic"
-          >
-            + Buat Baru
-          </button>
         </div>
 
         {/* Grid Library */}
         {games.length === 0 ? (
           <div className="bg-white border-4 border-dashed border-slate-300 rounded-[3rem] p-20 text-center">
-            <p className="text-slate-400 font-bold italic">Belum ada kuis. Ayo buat satu!</p>
+            <p className="text-slate-400 font-bold italic text-lg">Belum ada aktivitas di perpustakaan.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -80,14 +82,14 @@ export default function GameLibrary() {
                   
                   <button 
                     onClick={() => router.push(`/quiz/play/${game.id}`)}
-                    className="py-3 bg-white border-4 border-black rounded-xl font-black text-xs uppercase hover:bg-slate-50 transition-all"
+                    className="py-3 bg-white border-4 border-black rounded-xl font-black text-xs uppercase hover:bg-slate-50 transition-all border-b-[6px] border-black"
                   >
                     🎮 Solo Play
                   </button>
 
                   <button 
                     onClick={() => alert("Fitur Assign (PR) segera hadir!")}
-                    className="py-3 bg-white border-4 border-black rounded-xl font-black text-xs uppercase hover:bg-slate-50 transition-all"
+                    className="py-3 bg-white border-4 border-black rounded-xl font-black text-xs uppercase hover:bg-slate-50 transition-all border-b-[6px] border-black"
                   >
                     📅 Assign
                   </button>
